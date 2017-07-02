@@ -1,0 +1,212 @@
+:root {
+  --shadow-1-size: 0px;
+  --shadow-1: none;
+  /*--shadow-1: 0px 2px var(--shadow-1-size) 0px rgba(0,0,0,0.3);*/
+}
+
+/* ----- omnibox ----- */
+
+#omnibox {
+  position: absolute;
+  top: var(--shadow-1-size);
+  left: var(--shadow-1-size);
+  width: 672px;
+  white-space: nowrap;
+  transition: opacity 250ms ease-out;
+  box-shadow: var(--shadow-1);
+  opacity: 1;
+}
+
+#omnibox.hide {
+  margin-top: 60px;
+  opacity: 0;
+}
+
+#omnibox .button {
+  float: left;
+  background: rgba(255, 255, 255, 0.35);
+  min-width: 88px;
+  height: 88px;
+  font-size: 27px;
+  border: none;
+  border-right: 2px solid rgba(175,175,175,0.2);
+  color: #4C4C4C;
+  display: inline-block;
+  box-sizing: border-box;
+  margin:  0;
+  text-align: center;
+  vertical-align: top;
+}
+
+#omnibox #back{
+  border-radius: 100% 0 0 100%;
+}
+
+#omnibox #overflow{
+  border-radius: 0 100% 100% 0;
+}
+
+#omnibox .button:hover {
+  background-color: #ECECEC;
+}
+
+/* ----- progress ----- */
+
+#omnibox #progress {
+  position: absolute;
+  margin-top: -16px;
+  top: -32px;
+  left: 216px;
+  width: 240px;
+  height: 8px;
+  background: #B9B9B9;
+  opacity: 0;
+  border-radius: 4px;
+  z-index: -1;
+  overflow: hidden;
+  transition: top 400ms ease-in-out,
+              opacity 400ms ease-in;
+}
+
+#omnibox #progress #fill {
+  width: 0%;
+  height: 100%;
+  background: #595959;
+  transition: width 100ms ease-out;
+}
+
+/* ----- back ----- */
+
+#omnibox #back {
+  background-image: url('../images/icons/back.png');
+  background-position: 32px center;
+  background-repeat: no-repeat;
+  background-size: 30px;
+}
+
+/* ----- omni ----- */
+
+#omni {
+  width: 408px;
+  overflow: hidden;
+  box-sizing: border-box;
+  white-space: nowrap;
+  position: relative;
+}
+
+#connection-icon {
+  background-image: url('../images/icons/connection-https.png');
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  width: 17.5px;
+  height: 24px;
+  position: absolute;
+  top: 32px;
+  left: 30px;
+}
+
+#url {
+  white-space: nowrap;
+  overflow: hidden;
+  position: absolute;
+  width:  312px;
+  top: 29px;
+  left: 72px;
+}
+
+#omni #details {
+  color: rgb(150,150,150);
+}
+
+#omnibox.hide #omni .progress {
+  width: 0%;
+  opacity: 0;
+}
+
+/* ----- tabs ----- */
+
+#omnibox #tabs div {
+  font-size: 34px;
+  font-weight: 500;
+  position: relative;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* ----- reload ----- */
+
+#omnibox #reload {
+  background-image: url('../images/icons/reload.svg');
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+/* ----- overflow ----- */
+
+#omnibox #overflow {
+  background-image: url('../images/icons/overflow.svg');
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 32px;
+}
+
+/* ----- home ----- */
+
+#openMenu {
+  width: 96px;
+  height: 96px;
+  background-color: rgba(255, 255, 255, 0.35);
+  border-radius: 100%;
+  position: absolute;
+  left: 288px;
+  top: 120px;
+  background-image: url('../images/icons/home.png');
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 35%;
+}
+
+#openMenu:hover {
+  background-color: #ECECEC;
+}
+
+/* ----- exit WebVR ----- */
+
+/* #exitWebVR {
+  border-radius: 48px;
+  height: 96px;
+  position: absolute;
+  left: 50%;
+  top: 160px;
+  transform: translateX(-50%);
+  width: 96px;
+  background-image: url(images/x.svg);
+  background-fill: ;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-color: rgba(255,255,255,0.7);
+  transition: background-color 200ms ease-out;
+  visibility: hidden;
+}
+
+#exitWebVR:hover {
+  background-color: rgba(255,255,255,0.9);
+}
+
+#exitWebVR .tag {
+  color: rgba(255,255,255,0);
+  top: 110px;
+  font-size: 28px;
+  position: absolute;
+  text-shadow: none;
+  left: 50%;
+  transform: translateX(-50%);
+  transition: color 100ms ease-out,
+              text-shadow 100ms ease-out;
+}
+
+#exitWebVR:hover .tag {
+  color: white;
+  text-shadow: 0px 1px 14px rgba(0,0,0,0.3);
+} */

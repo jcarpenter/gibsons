@@ -1,0 +1,11 @@
+{
+  "name": "gibsons",
+  "version": "1.0.0",
+  "description": "A declarative 3D web prototyping setup",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Josh Carpenter",
+  "license": "ISC"
+}
