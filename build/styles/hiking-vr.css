@@ -1,0 +1,31 @@
+body {
+  --background: url("images/environments/puydesancy.jpg");
+  /*--environment: url("models/obj/cube/lightmapped-cube-export-1.obj");*/
+  /*--environment: url("models/obj/vive-controller/vr_controller_vive_1_5.obj");*/
+  --environment: url("models/gltf/duck/Duck.gltf");
+}
+
+#title {
+  --transform-style: stereo;
+  transform: translate3d(0px, -244px, 200px) scale(0.7, 0.7);
+}
+
+#flag {
+  --transform-style: stereo;
+  transform: translate3d(-780px, -240px, 200px) scale(0.6, 0.6);
+}
+
+#profile { 
+  --transform-style: stereo;
+  transform: translate3d(0, -600px, 200px) scale(0.6, 0.6);
+}
+
+#elevation, #preview, #reviews, #writeup, #gallery {
+  transition: opacity 0.5s ease-out;
+  opacity: 0;
+}
+
+#main {
+  transition: background 0.5s ease-out;
+  background: rgba(0,0,0,0);
+}

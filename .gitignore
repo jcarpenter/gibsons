@@ -66,9 +66,6 @@ typings/
 # mac 
 .DS_Store
 
-# build
-build
-
 # IDEs
 .idea
 *.iml
