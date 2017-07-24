@@ -1,11 +1,13 @@
 import Config from './config'
 
 export default class Camera {
-  constructor(renderer) {
+  constructor(renderer, webview) {
     const width = renderer.domElement.width;
     const height = renderer.domElement.height;
     this.camera = new THREE.PerspectiveCamera(Config.CAMERA_FOV, width / height, Config.CAMERA_NEAR, Config.CAMERA_FAR);
     this.camera.scale.set(0.01, 0.01, 0.01);
+    this.lookAt = true; // boolean that sets whether camera should look at a target. Is checked per frame by render loop in App. Wish there was a better way.
+    this.lookAtTarget = webview;
     this.updateSize(renderer);
     window.addEventListener('resize', () => this.updateSize(renderer), false);
   }

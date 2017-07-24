@@ -1,4 +1,4 @@
-import App from './app2.js';
+import App from './app.js';
 
 function init() {
   new App();
