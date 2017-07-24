@@ -5,8 +5,8 @@
   "repository": "https://github.com/jcarpenter/gibsons",
   "main": "index.js",
   "scripts": {
-  	"webpack": "webpack",
-  	"start": "http-server -c-1"
+    "webpack": "webpack",
+    "start": "http-server -c-1"
   },
   "author": "Josh Carpenter",
   "license": "ISC",

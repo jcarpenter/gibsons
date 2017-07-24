@@ -60,7 +60,7 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 0);
+/******/ 	return __webpack_require__(__webpack_require__.s = 3);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -70,243 +70,83 @@
 "use strict";
 
 
-var sceneGL, sceneCSS, rendererGL, rendererCSS;
-var camera, cameraParent;
-var domWrapper1, domWrapper2;
-var webview, webviewShadow;
-var backgroundGeometry, browserBackground;
-var sheets, sheetMobile, sheetVR;
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+exports.default = {
+	WEBVIEW_DISTANCE: 2,
+	WEBVIEW_WIDTH: 0.96,
+	WEBVIEW_HEIGHT: 0.64,
+	CAMERA_HEIGHT: 1.6,
+	CAMERA_FOV: 80,
+	CAMERA_NEAR: 0.1,
+	CAMERA_FAR: 60000,
+	BACKGROUND_RADIUS: 499
+};
 
-var loaderGLTF = new THREE.GLTF2Loader();
-var loaderOBJ = new THREE.OBJLoader2();
+/***/ }),
+/* 1 */
+/***/ (function(module, exports, __webpack_require__) {
 
-var stereoElements = [];
-
-var sceneStencil, rendererStencil, magicWindow, magicWindowCover;
-
-var WEBVIEW_DISTANCE = 2;
-var WEBVIEW_WIDTH = 0.96;
-var WEBVIEW_HEIGHT = 0.64;
-var CAMERA_HEIGHT = 1.6;
-
-function init() {
-
-  // Get style sheets
-  sheets = document.styleSheets;
-
-  for (var i = 0; i < sheets.length; i++) {
-    if (sheets[i].title === 'mobile') {
-      sheetMobile = sheets[i];
-    } else if (sheets[i].title === 'vr') {
-      sheetVR = sheets[i];
-    }
-  }
-
-  sheetVR.disabled = true;
-
-  // Create 'domWrapper' elements.
-  // Seem to need two to make overscroll srolling work :p
-  // We use this to wrap our page elements and pass to Three.js CSSRenderer
-  domWrapper1 = document.createElement('div');
-  domWrapper1.id = 'domWrapper1';
-  domWrapper1.style.width = String(WEBVIEW_WIDTH * 1000) + 'px';
-  domWrapper1.style.height = String(WEBVIEW_HEIGHT * 1000) + 'px';
-  domWrapper1.style.overflow = 'hidden';
-  domWrapper1.style.borderRadius = '8px';
-  domWrapper1.style.boxShadow = '0px 0px 80px 0px rgba(0,0,0,0.1)';
-  domWrapper1.style.transition = 'box-shadow 0.5s east-out';
-  document.body.appendChild(domWrapper1);
-
-  domWrapper2 = document.createElement('div');
-  domWrapper2.id = 'domWrapper2';
-  domWrapper2.style.width = '100%';
-  domWrapper2.style.height = '100%';
-  domWrapper2.style.position = 'absolute';
-  domWrapper2.style.top = '0';
-  domWrapper2.style.left = '0';
-  domWrapper2.style.overflow = 'scroll';
-  domWrapper1.appendChild(domWrapper2);
-
-  // Move page elements into the domWrapper2 element
-  while (document.body.children.length > 1) {
-    if (document.body.children[0].id != 'domWrapper1' || document.body.children[0].id != 'domWrapper2') {
-      domWrapper2.appendChild(document.body.children[0]);
-    }
-  }
-
-  // Setup scenes
-  sceneGL = new THREE.Scene();
-  sceneCSS = new THREE.Scene();
-  sceneStencil = new THREE.Scene();
-
-  //Setup renderers
-  rendererGL = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-  rendererGL.setSize(window.innerWidth, window.innerHeight);
-  rendererGL.domElement.style.position = 'absolute';
-  rendererGL.domElement.style.overflow = 'hidden';
-  rendererGL.domElement.style.top = 0;
-  rendererGL.domElement.style.left = 0;
-  document.body.appendChild(rendererGL.domElement);
-
-  rendererCSS = new THREE.CSS3DRenderer();
-  rendererCSS.setSize(window.innerWidth, window.innerHeight);
-  rendererCSS.domElement.style.position = 'absolute';
-  rendererCSS.domElement.style.overflow = 'hidden';
-  rendererCSS.domElement.style.top = 0;
-  rendererCSS.domElement.style.left = 0;
-  document.body.appendChild(rendererCSS.domElement);
-
-  rendererStencil = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-  rendererStencil.setSize(window.innerWidth, window.innerHeight);
-  rendererStencil.domElement.style.position = 'absolute';
-  rendererStencil.domElement.style.overflow = 'hidden';
-  rendererStencil.domElement.style.top = 0;
-  rendererStencil.domElement.style.left = 0;
-  document.body.appendChild(rendererStencil.domElement);
-
-  // Setup camera
-  // We want to be able to rotate the camera in space around the webview.
-  // So we nest the camera inside a parent Group object, which sits at webview depth, and the camera sits at 0,0,0.
-  // Rotating the parent swings the camera side to side, around the webview center.
-  camera = new THREE.PerspectiveCamera(80, 0.75, 0.1, 4000);
-  cameraParent = new THREE.Group();
-  cameraParent.position.z = -WEBVIEW_DISTANCE;
-  camera.position.z = WEBVIEW_DISTANCE;
-  sceneGL.add(camera, cameraParent);
-  cameraParent.add(camera); // Can only add camera to parent group -after- adding both to the scene.
-
-  //Setup browser background
-  backgroundGeometry = new THREE.SphereGeometry(1000, 64, 64);
-  backgroundGeometry.applyMatrix(new THREE.Matrix4().makeScale(-1, 1, 1));
-
-  browserBackground = new THREE.Mesh(backgroundGeometry, new THREE.MeshBasicMaterial({
-    shading: THREE.FlatShading,
-    map: new THREE.TextureLoader().load('images/environments/graygrid-360.png')
-  }));
-  browserBackground.rotation.set(0, -1.57, 0);
-  sceneGL.add(browserBackground);
-
-  // Setup shadow
-  webviewShadow = new THREE.Mesh(new THREE.PlaneGeometry(WEBVIEW_WIDTH, 0.04), new THREE.MeshBasicMaterial({
-    transparent: true,
-    opacity: 0.04,
-    color: 0x000000
-  }));
-  webviewShadow.rotation.x = -1.57;
-  webviewShadow.position.y = -CAMERA_HEIGHT;
-  webviewShadow.position.z = -WEBVIEW_DISTANCE;
-  webviewShadow.scale.set(WEBVIEW_DISTANCE, WEBVIEW_DISTANCE, WEBVIEW_DISTANCE);
-  sceneGL.add(webviewShadow);
-
-  // Setup 'webview': the variable name we give the outer DOM wrapper, once it's converted into a Three.js CSS3DObject.
-  webview = new THREE.CSS3DObject(domWrapper1);
-
-  // We scale sceneCSSS by 0.0001 to convert from pixels to meters. So 1px = 0.001 meter
-  webview.position.z = metersToPx(-WEBVIEW_DISTANCE);
-  webview.scale.set(WEBVIEW_DISTANCE, WEBVIEW_DISTANCE, WEBVIEW_DISTANCE);
-  sceneCSS.scale.set(0.001, 0.001, 0.001);
-  sceneCSS.add(webview);
-
-  // Setup magic window
-  // First, a sphere to hide everything
-  // Then a plane, to "punch through" the sphere. Jaume and I worked out this code in fall 2016. ColorWrite and RenderOrder values are the key.
-  magicWindowCover = new THREE.Mesh(new THREE.SphereGeometry(100, 64, 64), new THREE.MeshBasicMaterial({
-    shading: THREE.FlatShading,
-    side: THREE.DoubleSide,
-    map: new THREE.TextureLoader().load('images/environments/graygrid-360.png'),
-    transparent: true
-  }));
-  magicWindowCover.renderOrder = 1;
-
-  magicWindow = new THREE.Mesh(new THREE.PlaneGeometry(WEBVIEW_WIDTH, WEBVIEW_HEIGHT), new THREE.MeshPhongMaterial({
-    color: 0xF0D339,
-    colorWrite: false,
-    side: THREE.DoubleSide
-  }));
-  magicWindow.renderOrder = 0;
-  magicWindow.scale.set(WEBVIEW_DISTANCE, WEBVIEW_DISTANCE, WEBVIEW_DISTANCE);
-  magicWindow.position.z = -WEBVIEW_DISTANCE;
-
-  // sceneStencil.add( magicWindowCover );
-  // sceneStencil.add( magicWindow )
+"use strict";
 
 
-  // addLights();
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.metersToPx = metersToPx;
+exports.getTransform = getTransform;
+exports.parseMatrix = parseMatrix;
+exports.parseCssVar = parseCssVar;
+exports.parseCssUrl = parseCssUrl;
+// export function toggleWebGLVisibility(target, mode, duration = 250, delay = 0) {
 
-  // Start scene
-  onWindowResize();
-  animate();
-  setTimeout(function () {
-    // do stuff after delay
-  }, 500);
-}
+//   if (mode == 'show') {
 
-function addLights() {
-  var spotLight = new THREE.SpotLight(0xffffff);
-  spotLight.position.set(100, 1000, 100);
-  spotLight.castShadow = true;
-  spotLight.shadow.mapSize.width = 1024;
-  spotLight.shadow.mapSize.height = 1024;
-  spotLight.shadow.camera.near = 500;
-  spotLight.shadow.camera.far = 4000;
-  spotLight.shadow.camera.fov = 30;
-  sceneGL.add(spotLight);
-}
+//     // turn visibility true, then tween opacity to 1
+//     target.visible = true;
+//     new TWEEN.Tween(target.material)
+//       .to({opacity: 1}, delay)
+//       .delay(delay)
+//       .start();
 
-// var textureLoader = new THREE.TextureLoader();
+//   } else if (mode == 'hide') {
 
-// function loadTexture() {
-
-//   // new THREE.TextureLoader().load( 'images/environments/graygrid-360.png')
-//   // textureLoader.load()
+//     // tween to 0 then set visibility to false
+//     new TWEEN.Tween(target.material)
+//       .to({opacity: 0}, delay)
+//       .delay(delay)
+//       .onComplete(function(){
+//         target.visible = false;
+//       })
+//       .start();
+//   }
 // }
 
 
-/* ----- UTILITIES ----- */
+// export function toggleCSSVisibility(target, mode, delay = 0) {
 
-function toggleWebGLVisibility(target, duration) {
+//   if (mode == 'show') {
 
-  console.log(target);
+//     if (delay > 0) {
+//       window.setTimeout(() => {
+//         target.style.visibility = 'visible';
+//       }, delay);
+//     } else {
+//       target.style.visibility = 'visible';
+//     }
 
-  if (target.material.opacity == '1') {
-    new TWEEN.Tween(target.material).to({ opacity: 0 }, duration).start();
-  } else {
-    new TWEEN.Tween(target.material).to({ opacity: 1 }, duration).start();
-  }
-}
+//   } else if (mode == 'hide') {
 
-function toggleCSSVisibility(target) {
-
-  var el = document.querySelector(target);
-
-  if (el.style.opacity == '1') {
-    el.style.opacity = '0';
-    setTimeout(function () {
-      el.style.display = 'none';
-    }, 100);
-  } else {
-    el.style.display = 'block';
-    // Delay setting opacity, or opacity transition will not fire, due to https://bugs.chromium.org/p/chromium/issues/detail?id=121340
-    setTimeout(function () {
-      el.style.opacity = 1;
-    }, 100);
-  }
-}
-
-function hideObject(el) {
-  el.style.display = 'none';
-}
-
-function showObject(el) {
-  el.style.display = 'block';
-}
-
-function hideWebviewShadows() {
-
-  domWrapper1.style.boxShadow = '0px 0px 80px 0px rgba(0,0,0,0)';
-
-  new TWEEN.Tween(webviewShadow.material).to({ opacity: 0 }, 500).start();
-}
+//     if (delay > 0) {
+//       window.setTimeout(() => {
+//         target.style.visibility = 'hidden';
+//       }, delay);
+//     } else {
+//       target.style.visibility = 'hidden';
+//     }
+//   }
+// }
 
 function metersToPx(meters) {
   return meters * 1000;
@@ -391,339 +231,1084 @@ function parseCssUrl(element, varName) {
   }
 }
 
-// Create a JSON object for each stereo element
-// And "start" (windowed mode) and "target" (fullscreen mode) values.
+// export function toggleCSSOpacity(target) {
 
-function createStereoObjects() {
+//   var el = document.querySelector(target);
 
-  // Enable the VR style sheet, so we can grab it's values
-  sheetVR.disabled = false;
+//   if(el.style.opacity == '1') {
+//     el.style.opacity = '0';
+//     setTimeout( function(){ el.style.display = 'none' }, 100); 
+//   } else {
+//     el.style.display = 'block';
+//     // Delay setting opacity, or opacity transition will not fire, due to https://bugs.chromium.org/p/chromium/issues/detail?id=121340
+//     setTimeout( function(){ el.style.opacity = 1 }, 100); 
+//   }
+// }
 
-  // Get all elements. Loop through them
-  var all = domWrapper2.getElementsByTagName('*');
+/***/ }),
+/* 2 */
+/***/ (function(module, exports, __webpack_require__) {
 
-  // Find stereo elements and save them to array.
-  for (var i = 0; i < all.length; i++) {
+"use strict";
 
-    var element = all[i];
-    var transformStyle = parseCssVar(element, '--transform-style');
-    var transform = parseCssVar(element, 'transform');
 
-    // It's not enough to check for --transform-style: stereo,
-    // because we get false positives on children, which inherit it from parent.
-    // What we can about are stereo elements with 3D transforms.
-    // We get them by filtering out elements with transform 'none'.
-    if (transformStyle == 'stereo' && transform !== 'none') {
-
-      // Create an object for each element that matches the criteria, and push to the stereoElements array. We'll use it later.
-      var object = {};
-      object.element = element;
-      stereoElements.push(object);
-    }
-  }
-
-  // For each stereElement, populate it's value.
-  for (var i = 0; i < stereoElements.length; i++) {
-
-    var object = stereoElements[i];
-
-    var element = object.element;
-    object.name = element.id;
-
-    // Get element position and size values
-    var coordinateSpace = object.coordinateSpace = parseCssVar(element, '--position');
-
-    // Store start (non-3D) values
-    var startWidth = object.startWidth = parseInt(window.getComputedStyle(element).getPropertyValue('width'));
-    var startHeight = object.startHeight = parseInt(window.getComputedStyle(element).getPropertyValue('height'));
-    var startX = object.startX = element.offsetLeft;
-    var startY = object.startY = element.offsetTop;
-
-    // Store original element (VR) values
-    var targetScaleX = object.targetScaleX = getTransform(element).scale.x;
-    var targetScaleY = object.targetScaleY = getTransform(element).scale.y;
-
-    // Clone the original element:
-    // The clone stays in the position in page flow, and the original element is turned into a CSS3D object.
-    // This preserves the original layout during the transition by avoiding reflows created when original element is positioned absolute.
-    // Original element also retains it's event listeners.
-    var clone = object.clone = element.cloneNode(true);
-    element.parentElement.insertBefore(clone, element);
-
-    // If the original element is position:absolute, zero out position values and change to relative, before converting to a CSS3DObject.
-    // This helps ensure that it's 'after' position matches it's 'before'.
-    if (window.getComputedStyle(element).getPropertyValue('position') == 'absolute') {
-      element.style.top = element.style.bottom = element.style.left = element.style.right = 0;
-      element.style.position = 'relative';
-    }
-
-    // Make a CSS3D object from the target
-    var threeElement = object.threeElement = new THREE.CSS3DObject(element);
-
-    if (coordinateSpace == 'world') {
-
-      threeElement.position.x = 0;
-      threeElement.position.y = 0;
-      threeElement.position.z = metersToPx(-WEBVIEW_DISTANCE);
-
-      var targetTransformX = object.targetTransformX = getTransform(element).translate.x;
-      var targetTransformY = object.targetTransformY = getTransform(element).translate.y;
-      var targetTransformZ = object.targetTransformZ = getTransform(element).translate.z;
-
-      // Add threeElement to the scene.
-      sceneCSS.add(threeElement);
-    } else {
-
-      object.coordinateSpace = "window";
-
-      // Match this object's position/rotation to the original target element
-      threeElement.position.x = startX + startWidth / 2 - metersToPx(WEBVIEW_WIDTH) / 2;
-      threeElement.position.y = -startY - startHeight / 2 + metersToPx(WEBVIEW_HEIGHT) / 2;
-      threeElement.position.z = 0.0001;
-
-      var targetTransformX = object.targetTransformX = threeElement.position.x + getTransform(element).translate.x;
-      var targetTransformY = object.targetTransformY = threeElement.position.y + getTransform(element).translate.y;
-      var targetTransformZ = object.targetTransformZ = getTransform(element).translate.z;
-
-      // Add object to the scene as a child of the webview CSS3D object, so positions are relative
-      webview.add(threeElement);
-    }
-
-    element.style.visibility = 'hidden'; // hide the CSS3DObject to start (by setting visibility style of the original element)
-  }
-
-  // Disable the VR style sheet when done, to set things back to normal.
-  sheetVR.disabled = true;
-}
-
-function loadBackground(element, customProp) {
-
-  // get URL of texture from CSS custom property
-  var texture_url = parseCssUrl(document.querySelector(element), customProp);
-
-  // TODO: check if url is valid url before proceeding
-
-  // create new sphere mesh, textured with URL
-  var siteBackground = new THREE.Mesh(backgroundGeometry, new THREE.MeshBasicMaterial({
-    shading: THREE.FlatShading,
-    transparent: true,
-    opacity: 0,
-    map: new THREE.TextureLoader().load(texture_url)
-  }));
-  siteBackground.rotation.set(0, -1.57, 0);
-  siteBackground.scale.set(0.99, 0.99, 0.99);
-  sceneGL.add(siteBackground);
-
-  new TWEEN.Tween(siteBackground.material).to({ opacity: 1 }, 500).start();
-}
-
-function loadEnvironment_GLTF(element, customProp) {
-
-  // get URL of texture from CSS custom property
-  var model_url = parseCssUrl(document.querySelector(element), customProp);
-
-  // load url
-  loaderGLTF.load(model_url, function (gltf) {
-    sceneGL.add(gltf.scene);
-
-    gltf.animations; // Array: THREE.AnimationClip
-    gltf.scene; // THREE.Scene
-    gltf.scenes; // Array: THREE.Scene
-    gltf.cameras; // Array: THREE.Camera
-
-    gltf.scene.position.set(0, 0, -4);
-  });
-}
-
-function loadEnvironment_OBJ(element, customProp) {
-
-  // get URL of texture from CSS custom property
-  var model_url = parseCssUrl(document.querySelector(element), customProp);
-
-  // load url
-  loaderOBJ.load(model_url, function (obj) {
-    sceneGL.add(obj);
-    obj.position.set(0, 0, -1);
-
-    new TWEEN.Tween(obj.position).to({ x: 0.15, y: -0.15, z: -0.3 }, 4000).start();
-
-    new TWEEN.Tween(obj.rotation).to({ x: Math.PI / 2, y: Math.PI / 2, z: Math.PI / 2 }, 4000).start();
-  });
-}
-
-function setDisplayMode(mode) {
-
-  if (mode == 'fullscreen') {
-
-    sheetVR.disabled = false;
-    loadBackground('body', '--background');
-    hideWebviewShadows();
-  } else if (mode == 'windowed') {}
-
-  for (var i = 0; i < stereoElements.length; i++) {
-
-    var object = stereoElements[i];
-    var threeElement = object.threeElement;
-
-    // Animate to new position, scale, rotation
-
-    object.element.style.visibility = 'visible';
-    object.clone.style.visibility = 'hidden'; // TODO: Move this (and all styling) out of here
-
-    if (object.targetTransformX) {
-      new TWEEN.Tween(object.threeElement.position).to({ x: object.targetTransformX }, 750).easing(TWEEN.Easing.Quadratic.InOut).start();
-    }
-
-    if (object.targetTransformY) {
-      new TWEEN.Tween(object.threeElement.position).to({ y: object.targetTransformY }, 750).easing(TWEEN.Easing.Quadratic.InOut).start();
-    }
-
-    if (object.targetTransformZ) {
-      new TWEEN.Tween(object.threeElement.position).to({ z: object.targetTransformZ }, 750).easing(TWEEN.Easing.Quadratic.InOut).start();
-    }
-
-    if (object.targetScaleX) {
-      new TWEEN.Tween(object.threeElement.scale).to({ x: object.targetScaleX }, 750).easing(TWEEN.Easing.Quadratic.InOut).start();
-    }
-
-    if (object.targetScaleY) {
-      new TWEEN.Tween(object.threeElement.scale).to({ y: object.targetScaleY }, 750).easing(TWEEN.Easing.Quadratic.InOut).start();
-    }
-  }
-}
-
-/* ----- EVENT LISTENERS ----- */
-
-window.addEventListener('resize', onWindowResize, false);
-
-window.addEventListener('keydown', function (e) {
-
-  var handled = false;
-
-  // Check if meta or ctrl keys are pressed. If not, proceed. Ensures keyboard shortcuts work properly on Mac & Windows.
-  if (!e.metaKey || !e.metaKey) {
-
-    switch (e.keyCode) {
-
-      case 49:
-        {
-          // 1 —— Load VR styles and apply to scene.
-
-          // loadEnvironment_GLTF('body', '--environment');
-          createStereoObjects();
-
-          handled = true;
-          break;
-        }
-      case 50:
-        {
-          // 2 —— Switch to windowed mode
-
-
-          setDisplayMode('fullscreen');
-
-          handled = true;
-          break;
-        }
-      case 51:
-        {
-          // 3 —— 
-
-          toggleWebGLVisibility(magicWindowCover);
-
-          handled = true;
-          break;
-        }
-      case 52:
-        {
-          // 4 —— 
-
-          handled = true;
-          break;
-        }
-      case 53:
-        {
-          // 5 —— look side-to-side
-
-          var tweenA = new TWEEN.Tween(camera.rotation).to({ x: .1, y: .4 }, 1000).easing(TWEEN.Easing.Quadratic.InOut);
-
-          var tweenB = new TWEEN.Tween(camera.rotation).to({ x: .05, y: -.7 }, 1600).easing(TWEEN.Easing.Quadratic.InOut);
-
-          var tweenC = new TWEEN.Tween(camera.rotation).to({ x: -0.03, y: 0.04 }, 1700).easing(TWEEN.Easing.Quadratic.InOut);
-
-          var tweenD = new TWEEN.Tween(camera.rotation).to({ x: 0, y: 0 }, 600).easing(TWEEN.Easing.Quadratic.InOut);
-
-          tweenA.chain(tweenB);
-          tweenB.chain(tweenC);
-          tweenC.chain(tweenD);
-          tweenA.start();
-
-          handled = true;
-          break;
-        }
-
-      case 54:
-        {
-          // 6 —— lean head from side to side, around window edges
-
-          camera.updateProjectionMatrix();
-          var tweenA = new TWEEN.Tween(cameraParent.rotation).to({ y: 1 }, 1250).easing(TWEEN.Easing.Quadratic.Out);
-
-          var tweenB = new TWEEN.Tween(cameraParent.rotation).to({ y: -1 }, 3000).easing(TWEEN.Easing.Quadratic.InOut);
-
-          var tweenC = new TWEEN.Tween(cameraParent.rotation).to({ y: 0 }, 1500).easing(TWEEN.Easing.Quadratic.InOut);
-
-          tweenA.chain(tweenB);
-          tweenB.chain(tweenC);
-          tweenA.start();
-
-          handled = true;
-          break;
-        }
-
-      case 32:
-        {
-          // space
-
-          handled = true;
-          break;
-        }
-    }
-
-    if (handled) e.preventDefault();
-  }
+Object.defineProperty(exports, "__esModule", {
+  value: true
 });
 
-/* ----- WINDOW RESIZES ----- */
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-function onWindowResize() {
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-  var w = window.innerWidth;
-  var h = window.innerHeight;
+var StyleSheets = function () {
+  function StyleSheets() {
+    _classCallCheck(this, StyleSheets);
 
-  camera.aspect = w / h;
-  camera.updateProjectionMatrix();
+    // get document stylesheets    
+    this.sheets = document.styleSheets;
 
-  rendererGL.setSize(w, h);
-  rendererCSS.setSize(w, h);
-  rendererStencil.setSize(w, h);
+    // create a variable for the stylesheet with 'vr' title
+    for (var i = 0; i < this.sheets.length; i++) {
+      if (this.sheets[i].title === 'vr') {
+        this.vr = this.sheets[i];
+      }
+    }
+
+    // disable the vr stylesheet. It should only be active in certain display modes.
+    this.setVRSheet('disable');
+  }
+
+  _createClass(StyleSheets, [{
+    key: 'setVRSheet',
+    value: function setVRSheet(mode) {
+      if (mode == 'disable') {
+        this.vr.disabled = true;
+      } else if (mode == 'enable') {
+        this.vr.disabled = false;
+      }
+    }
+  }]);
+
+  return StyleSheets;
+}();
+
+exports.default = StyleSheets;
+
+/***/ }),
+/* 3 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _app = __webpack_require__(4);
+
+var _app2 = _interopRequireDefault(_app);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function init() {
+  new _app2.default();
 }
-
-function animate() {
-
-  requestAnimationFrame(animate);
-  TWEEN.update();
-
-  rendererGL.render(sceneGL, camera);
-  rendererCSS.render(sceneCSS, camera);
-  rendererStencil.render(sceneStencil, camera);
-}
-
-/* ----- START SCENE ----- */
 
 window.onload = function () {
   init();
 };
+
+/***/ }),
+/* 4 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _background = __webpack_require__(5);
+
+var _background2 = _interopRequireDefault(_background);
+
+var _camera = __webpack_require__(6);
+
+var _camera2 = _interopRequireDefault(_camera);
+
+var _config = __webpack_require__(0);
+
+var _config2 = _interopRequireDefault(_config);
+
+var _container = __webpack_require__(7);
+
+var _container2 = _interopRequireDefault(_container);
+
+var _css3dObjects = __webpack_require__(8);
+
+var _css3dObjects2 = _interopRequireDefault(_css3dObjects);
+
+var _cssRoot = __webpack_require__(10);
+
+var _cssRoot2 = _interopRequireDefault(_cssRoot);
+
+var _domWrapper = __webpack_require__(11);
+
+var _domWrapper2 = _interopRequireDefault(_domWrapper);
+
+var _events = __webpack_require__(12);
+
+var _events2 = _interopRequireDefault(_events);
+
+var _rendererCSS = __webpack_require__(13);
+
+var _rendererCSS2 = _interopRequireDefault(_rendererCSS);
+
+var _rendererGL = __webpack_require__(14);
+
+var _rendererGL2 = _interopRequireDefault(_rendererGL);
+
+var _state = __webpack_require__(15);
+
+var _state2 = _interopRequireDefault(_state);
+
+var _styleSheets = __webpack_require__(2);
+
+var _styleSheets2 = _interopRequireDefault(_styleSheets);
+
+var _webview = __webpack_require__(16);
+
+var _webview2 = _interopRequireDefault(_webview);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+// app class instantiates and ties all of the components together, starts the loading process and renders the main loop
+var App = function () {
+  function App() {
+    _classCallCheck(this, App);
+
+    // create container element
+    this.container = new _container2.default();
+
+    // create scenes
+    this.sceneGL = new THREE.Scene();
+    this.sceneCSS = new THREE.Scene();
+
+    // instantiate renderers
+    this.rendererGL = new _rendererGL2.default(this.sceneGL, this.container.container);
+    this.rendererCSS = new _rendererCSS2.default(this.sceneCSS, this.container.container);
+
+    // instantiate camera
+    this.camera = new _camera2.default(this.rendererGL.renderer);
+
+    // instantiate cssRoot object (we add all CSS objects to this)
+    this.cssRoot = new _cssRoot2.default(this.sceneCSS);
+
+    // instantiate 'domWrapper': an element containing all the original HTML elements
+    this.domWrapper = new _domWrapper2.default();
+
+    // instantiate 'webview': simply the domWrapper converted to a CSS3D object, sized and positioned like a browser window in ChromeVR.
+    this.webview = new _webview2.default(this.cssRoot, this.domWrapper);
+
+    //instantiate styles
+    this.styleSheets = new _styleSheets2.default();
+
+    // instantiate CSS3D objects. Pass in cssRoot, webview and domWrapper. They're needed for setup purposes.
+    this.stereoElements = new _css3dObjects2.default(this.cssRoot, this.webview, this.domWrapper, this.styleSheets); // array
+
+    // instantiate backgrounds
+    this.browserBackground = new _background2.default(this.sceneGL, 'images/environments/graygrid-360.png', 1);
+    this.siteBackground = new _background2.default(this.sceneGL, 'images/environments/puydesancy.jpg', 0.9); // TODO: make this not hard-coded
+    this.siteBackground.object.rotation.set(0, -1.57, 0);
+
+    // instantiate state
+    this.state = new _state2.default(this.styleSheets, this.stereoElements, this.siteBackground, this.webview);
+    this.state.setDisplayMode('mobile');
+
+    // instantiate events
+    this.events = new _events2.default(this.camera, this.state);
+
+    // start render loop
+    this.render();
+  }
+
+  _createClass(App, [{
+    key: 'render',
+    value: function render() {
+      TWEEN.update();
+      this.rendererGL.render(this.sceneGL, this.camera.camera);
+      this.rendererCSS.render(this.sceneCSS, this.camera.camera);
+      requestAnimationFrame(this.render.bind(this)); // bind the main class instead of window object
+    }
+  }]);
+
+  return App;
+}();
+
+exports.default = App;
+
+/***/ }),
+/* 5 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _config = __webpack_require__(0);
+
+var _config2 = _interopRequireDefault(_config);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var Background = function () {
+  function Background(scene, texture) {
+    var scale = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 1;
+
+    _classCallCheck(this, Background);
+
+    var geometry = new THREE.SphereGeometry(_config2.default.BACKGROUND_RADIUS, 64, 64);
+    geometry.applyMatrix(new THREE.Matrix4().makeScale(-scale, scale, scale));
+
+    this.object = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({
+      shading: THREE.FlatShading,
+      map: new THREE.TextureLoader().load(texture)
+    }));
+    this.object.rotation.set(0, -1.57, 0);
+    scene.add(this.object);
+  }
+
+  _createClass(Background, [{
+    key: 'hide',
+    value: function hide() {
+      this.object.visible = true;
+      new TWEEN.Tween(this.object.material).to({ opacity: 1 }, 250).delay(250).start();
+    }
+  }, {
+    key: 'show',
+    value: function show() {
+      new TWEEN.Tween(this.object.material).to({ opacity: 0 }, 250).onComplete(function () {
+        this.object.visible = false;
+      }.bind(this)).start();
+    }
+  }]);
+
+  return Background;
+}();
+
+exports.default = Background;
+
+/***/ }),
+/* 6 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _config = __webpack_require__(0);
+
+var _config2 = _interopRequireDefault(_config);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var Camera = function () {
+  function Camera(renderer) {
+    var _this = this;
+
+    _classCallCheck(this, Camera);
+
+    var width = renderer.domElement.width;
+    var height = renderer.domElement.height;
+    this.camera = new THREE.PerspectiveCamera(_config2.default.CAMERA_FOV, width / height, _config2.default.CAMERA_NEAR, _config2.default.CAMERA_FAR);
+    this.camera.scale.set(0.01, 0.01, 0.01);
+    this.updateSize(renderer);
+    window.addEventListener('resize', function () {
+      return _this.updateSize(renderer);
+    }, false);
+  }
+
+  _createClass(Camera, [{
+    key: 'updateSize',
+    value: function updateSize(renderer) {
+      this.camera.aspect = renderer.domElement.width / renderer.domElement.height;
+      this.camera.updateProjectionMatrix();
+    }
+
+    // the following are camera animations
+
+  }, {
+    key: 'lookAroundEdgesOfWebview',
+    value: function lookAroundEdgesOfWebview() {
+      // camera.updateProjectionMatrix();
+      var tweenA = new TWEEN.Tween(this.camera.rotation).to({ y: 1 }, 1250).easing(TWEEN.Easing.Quadratic.Out);
+
+      var tweenB = new TWEEN.Tween(this.camera.rotation).to({ y: -1 }, 3000).easing(TWEEN.Easing.Quadratic.InOut);
+
+      var tweenC = new TWEEN.Tween(this.camera.rotation).to({ y: 0 }, 1500).easing(TWEEN.Easing.Quadratic.InOut);
+
+      tweenA.chain(tweenB);
+      tweenB.chain(tweenC);
+      tweenA.start();
+    }
+  }, {
+    key: 'lookSideToSide',
+    value: function lookSideToSide() {
+
+      var tweenA = new TWEEN.Tween(this.camera.rotation).to({ x: .1, y: .4 }, 1000).easing(TWEEN.Easing.Quadratic.InOut);
+
+      var tweenB = new TWEEN.Tween(this.camera.rotation).to({ x: .05, y: -.7 }, 1600).easing(TWEEN.Easing.Quadratic.InOut);
+
+      var tweenC = new TWEEN.Tween(this.camera.rotation).to({ x: -0.03, y: 0.04 }, 1700).easing(TWEEN.Easing.Quadratic.InOut);
+
+      var tweenD = new TWEEN.Tween(this.camera.rotation).to({ x: 0, y: 0 }, 600).easing(TWEEN.Easing.Quadratic.InOut);
+
+      tweenA.chain(tweenB);
+      tweenB.chain(tweenC);
+      tweenC.chain(tweenD);
+      tweenA.start();
+    }
+  }, {
+    key: 'panSideToSide',
+    value: function panSideToSide() {
+
+      var tweenA = new TWEEN.Tween(this.camera.position).to({ x: 1 }, 1250).easing(TWEEN.Easing.Quadratic.Out);
+
+      var tweenB = new TWEEN.Tween(this.camera.position).to({ x: -1 }, 3000).easing(TWEEN.Easing.Quadratic.InOut);
+
+      var tweenC = new TWEEN.Tween(this.camera.position).to({ x: 0 }, 1500).easing(TWEEN.Easing.Quadratic.InOut);
+
+      tweenA.chain(tweenB);
+      tweenB.chain(tweenC);
+      tweenA.start();
+    }
+  }]);
+
+  return Camera;
+}();
+
+exports.default = Camera;
+
+/***/ }),
+/* 7 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var Container = function Container() {
+  _classCallCheck(this, Container);
+
+  // the container element will contain our Three.js renderers
+  this.container = document.createElement('div');
+  this.container.id = 'container';
+  this.container.style.position = 'absolute';
+  this.container.style.width = '100%';
+  this.container.style.height = '100vh';
+  this.container.style.top = this.container.style.left = 0;
+  document.body.appendChild(this.container);
+};
+
+exports.default = Container;
+
+/***/ }),
+/* 8 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _css3dObject = __webpack_require__(9);
+
+var _css3dObject2 = _interopRequireDefault(_css3dObject);
+
+var _utilities = __webpack_require__(1);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var Css3dObjects = function () {
+  function Css3dObjects(cssRoot, webview, domWrapper, styleSheets) {
+    _classCallCheck(this, Css3dObjects);
+
+    // turn on vr stylesheet so we can parse it's values. We'll turn it off at the end of this function.
+    styleSheets.setVRSheet('enable');
+
+    this.allElements = [];
+    this.stereoElements = [];
+
+    // `domWrapper.getElementsByTagName('*')` returns all elements inside domWrapper
+    for (var i = 0; i < domWrapper.getElementsByTagName('*').length; i++) {
+      this.allElements.push(domWrapper.getElementsByTagName('*')[i]);
+    }
+
+    // find elements that have both --transform-style 'stereo' and a transform, and create Css3dObject instances from them.
+    for (var i = 0; i < this.allElements.length; i++) {
+
+      this.element = this.allElements[i];
+      this.transformStyle = (0, _utilities.parseCssVar)(this.element, '--transform-style');
+      this.transform = (0, _utilities.parseCssVar)(this.element, 'transform');
+
+      // It's not enough to check for --transform-style: stereo, because we get false positives on children, which inherit it from parent.
+      // We can get the precision we need by also checking if they have transforms.
+      // TODO: This is obviously error prone, since some elements that are children of a 'stereo' parent could indeed have transforms, but it works for now.
+      if (this.transformStyle == 'stereo' && this.transform !== 'none') {
+
+        // for each element that matches the criteria, create a css3dObject instance and push it to the stereoElements array.
+        this.css3dObject = new _css3dObject2.default(cssRoot, webview, this.element);
+        this.stereoElements.push(this.css3dObject);
+      }
+    }
+
+    // turn off the vr stylesheet. We don't want it active and adjusting layout until we're in VR mode.
+    styleSheets.setVRSheet('disable');
+  }
+
+  // for each css3dObject instance in stereoElements array, call it's animate function
+  // 'mode' is either 'hide' or 'show'.
+
+
+  _createClass(Css3dObjects, [{
+    key: 'animate',
+    value: function animate(mode, duration) {
+
+      this.stereoElements.forEach(function (e) {
+        e.animate(mode, duration);
+      });
+    }
+  }]);
+
+  return Css3dObjects;
+}();
+
+exports.default = Css3dObjects;
+
+/***/ }),
+/* 9 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _utilities = __webpack_require__(1);
+
+var _config = __webpack_require__(0);
+
+var _config2 = _interopRequireDefault(_config);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var Css3dObject = function () {
+  function Css3dObject(cssRoot, webview, element) {
+    _classCallCheck(this, Css3dObject);
+
+    // get element and id
+    this.element = element;
+    this.id = this.element.id;
+
+    // get coordinate space from css.
+    this.coordinateSpace = (0, _utilities.parseCssVar)(this.element, '--position');
+
+    // assign 'window' if undefined (thereby making 'window' the default).
+    if (!this.coordinateSpace) {
+      this.coordinateSpace = 'window';
+    };
+
+    // get starting values
+    this.startWidth = parseInt(window.getComputedStyle(this.element).getPropertyValue('width'));
+    this.startHeight = parseInt(window.getComputedStyle(this.element).getPropertyValue('height'));
+    this.startX = this.element.offsetLeft;
+    this.startY = this.element.offsetTop;
+    this.startZ;
+
+    // store original element (VR) values
+    this.targetScaleX = (0, _utilities.getTransform)(this.element).scale.x;
+    this.targetScaleY = (0, _utilities.getTransform)(this.element).scale.y;
+
+    // clone the original element:
+    // the clone stays in the position in page flow, and the original element is turned into a CSS3D object.
+    // this preserves the original layout during the transition by avoiding reflows created when original element is positioned absolute.
+    // original element also retains it's event listeners.
+    this.clone = this.element.cloneNode(true);
+    this.element.parentElement.insertBefore(this.clone, this.element);
+
+    // if the original element is position:absolute, zero out position values and change to relative, before converting to a CSS3DObject.
+    // this helps ensure that it's 'after' position matches it's 'before'.
+    if (window.getComputedStyle(this.element).getPropertyValue('position') == 'absolute') {
+      this.element.style.top = this.element.style.bottom = this.element.style.left = this.element.style.right = 0;
+      this.element.style.position = 'relative';
+    }
+
+    // make a CSS3DObject of the element
+    this.object = new THREE.CSS3DObject(this.element);
+
+    // some coordinates depend on whether the object is in the 'world' or 'window' coordinate space
+    if (this.coordinateSpace == 'world') {
+
+      // position models at the values specific by their transforms. These are in the 'world' coordinate space (world being cssRoot); not relative to the window.
+      this.object.position.x = (0, _utilities.getTransform)(element).translate.x;
+      this.object.position.y = (0, _utilities.getTransform)(element).translate.y;
+      this.object.position.z = (0, _utilities.getTransform)(element).translate.z;
+
+      // capturing 'target' values for objects in 'world' coordinate space isn't as useful, since they don't animate positions when displayMode changes, but we grab them anyways.
+      this.targetTransformX = object.position.x;
+      this.targetTransformY = object.position.y;
+      this.targetTransformZ = object.position.z;
+
+      // add the CSS3Oobject to the cssRoot
+      cssRoot.add(this.object);
+    } else if (this.coordinateSpace == 'window') {
+
+      // match this object's position/rotation to the original target element
+      this.object.position.x = this.startX + this.startWidth / 2 - (0, _utilities.metersToPx)(_config2.default.WEBVIEW_WIDTH) / 2;
+      this.object.position.y = -this.startY - this.startHeight / 2 + (0, _utilities.metersToPx)(_config2.default.WEBVIEW_HEIGHT) / 2;
+      this.object.position.z = 0.0001;
+
+      // capture these values as the 'start' values. We'll use these to drive animations.
+      this.startX = this.object.position.x;
+      this.startY = this.object.position.y;
+      this.startZ = this.object.position.z;
+
+      // set 'target' values. In 'window' mode, transforms are relative to original element position, so we add the transform values to the original values.
+      this.targetTransformX = this.object.position.x + (0, _utilities.getTransform)(this.element).translate.x;
+      this.targetTransformY = this.object.position.y + (0, _utilities.getTransform)(this.element).translate.y;
+      this.targetTransformZ = (0, _utilities.getTransform)(this.element).translate.z;
+
+      // add the CSS3Oobject to the webview object, so positions are relative
+      webview.object.add(this.object);
+    }
+
+    this.element.style.visibility = 'hidden'; // hide the CSS3DObject to start (by setting visibility style of the original element)
+  }
+
+  _createClass(Css3dObject, [{
+    key: 'animate',
+    value: function animate(mode) {
+      var duration = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 250;
+
+
+      var tranX = void 0,
+          tranY = void 0,
+          tranZ = void 0,
+          scaleX = void 0,
+          scaleY = void 0,
+          delay = void 0;
+
+      // animate to new position, scale, rotation
+      if (this.coordinateSpace == 'window') {
+
+        if (mode == 'show') {
+
+          this.element.style.visibility = 'visible';
+          this.clone.style.visibility = 'hidden';
+          tranX = this.targetTransformX;
+          tranY = this.targetTransformY;
+          tranZ = this.targetTransformZ;
+          scaleX = this.targetScaleX;
+          scaleY = this.targetScaleY;
+        } else if (mode == 'hide') {
+
+          delay = duration;
+          this.hide(this.element, delay); // wait until position tweens complete to hide the CSS3D versions.
+          this.show(this.clone, delay); // wait until position tweens complete to show the inline ("clone") versions. This makes transition seamless.
+          tranX = this.startX;
+          tranY = this.startY;
+          tranZ = this.startZ;
+          scaleX = 1;
+          scaleY = 1;
+        }
+
+        if (tranX) {
+          new TWEEN.Tween(this.object.position).to({ x: tranX }, duration).easing(TWEEN.Easing.Quadratic.InOut).start();
+        }
+
+        if (tranY) {
+          new TWEEN.Tween(this.object.position).to({ y: tranY }, duration).easing(TWEEN.Easing.Quadratic.InOut).start();
+        }
+
+        if (tranZ) {
+          new TWEEN.Tween(this.object.position).to({ z: tranZ }, duration).easing(TWEEN.Easing.Quadratic.InOut).start();
+        }
+
+        if (scaleX) {
+          new TWEEN.Tween(this.object.scale).to({ x: scaleX }, duration).easing(TWEEN.Easing.Quadratic.InOut).start();
+        }
+
+        if (scaleY) {
+          new TWEEN.Tween(this.object.scale).to({ y: scaleY }, duration).easing(TWEEN.Easing.Quadratic.InOut).start();
+        }
+      }
+    }
+  }, {
+    key: 'hide',
+    value: function hide(target) {
+      var delay = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
+
+      if (delay > 0) {
+        window.setTimeout(function () {
+          target.style.visibility = 'hidden';
+        }, delay);
+      } else {
+        target.style.visibility = 'hidden';
+      }
+    }
+  }, {
+    key: 'show',
+    value: function show(target) {
+      var delay = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
+
+      if (delay > 0) {
+        window.setTimeout(function () {
+          target.style.visibility = 'visible';
+        }, delay);
+      } else {
+        target.style.visibility = 'visible';
+      }
+    }
+  }]);
+
+  return Css3dObject;
+}();
+
+exports.default = Css3dObject;
+
+/***/ }),
+/* 10 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var CssRoot = function CssRoot(scene) {
+  _classCallCheck(this, CssRoot);
+
+  // Setup cssRoot and scale by 0.001. We do this to adjust CSS px values into meters.
+  // All subsequent CSS objects are added to cssRoot.
+  this.cssRoot = new THREE.Object3D();
+  this.cssRoot.scale.set(0.001, 0.001, 0.001);
+  scene.add(this.cssRoot);
+  return this.cssRoot;
+};
+
+exports.default = CssRoot;
+
+/***/ }),
+/* 11 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _styleSheets = __webpack_require__(2);
+
+var _styleSheets2 = _interopRequireDefault(_styleSheets);
+
+var _config = __webpack_require__(0);
+
+var _config2 = _interopRequireDefault(_config);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var DomWrapper = function DomWrapper() {
+  _classCallCheck(this, DomWrapper);
+
+  //get stylesheets
+  this.styleSheets = new _styleSheets2.default();
+
+  //move html elements into a wrapper element
+  this.domWrapper = document.createElement('div');
+  this.domWrapper.id = 'domWrapper';
+  this.domWrapper.style.width = String(_config2.default.WEBVIEW_WIDTH * 1000) + 'px';
+  this.domWrapper.style.height = String(_config2.default.WEBVIEW_HEIGHT * 1000) + 'px';
+  this.domWrapper.style.position = 'relative';
+  this.domWrapper.style.overflow = 'scroll';
+  this.domWrapper.style.borderRadius = '8px';
+  this.domWrapper.style.boxShadow = '0px 0px 80px 0px rgba(0,0,0,0.1)';
+  this.domWrapper.style.transition = 'box-shadow 0.5s east-out';
+  document.body.appendChild(this.domWrapper);
+
+  // Move page elements into the domWrapper element
+  while (document.body.children.length > 2) {
+    var el = document.body.children[0];
+    if (el.id != 'domWrapper' && el.id != 'container') {
+      this.domWrapper.appendChild(document.body.children[0]);
+    }
+  }
+
+  return this.domWrapper;
+};
+
+exports.default = DomWrapper;
+
+/***/ }),
+/* 12 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var Events = function Events(camera, state) {
+  _classCallCheck(this, Events);
+
+  window.addEventListener('keydown', function (e) {
+
+    var handled = false;
+
+    // check if meta or ctrl keys are pressed. If not, proceed. Ensures keyboard shortcuts work properly on Mac & Windows.
+    if (!e.metaKey || !e.metaKey) {
+
+      switch (e.keyCode) {
+        case 49:
+          {
+            // 1
+            state.setDisplayMode('mobile');
+            handled = true;
+            break;
+          }
+        case 50:
+          {
+            // 2
+            state.setDisplayMode('vr-fullscreen');
+            handled = true;
+            break;
+          }
+        case 51:
+          {
+            // 3
+            state.setDisplayMode('vr-windowed');
+            handled = true;
+            break;
+          }
+        case 52:
+          {
+            // 4
+            camera.lookAroundEdgesOfWebview();
+            handled = true;
+            break;
+          }
+        case 53:
+          {
+            // 5
+            camera.lookSideToSide();
+            handled = true;
+            break;
+          }
+        case 54:
+          {
+            // 6
+            camera.panSideToSide();
+            handled = true;
+            break;
+          }
+
+        case 32:
+          {
+            // space
+            handled = true;
+            break;
+          }
+      }
+
+      if (handled) e.preventDefault();
+    }
+  });
+};
+
+exports.default = Events;
+
+/***/ }),
+/* 13 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _config = __webpack_require__(0);
+
+var _config2 = _interopRequireDefault(_config);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var RendererCSS = function () {
+  function RendererCSS(scene, container) {
+    var _this = this;
+
+    _classCallCheck(this, RendererCSS);
+
+    this.scene = scene;
+    this.container = container;
+    this.renderer = new THREE.CSS3DRenderer();
+    this.renderer.domElement.style.position = 'absolute';
+    this.renderer.domElement.style.top = 0;
+    this.renderer.domElement.style.left = 0;
+    container.appendChild(this.renderer.domElement);
+
+    this.updateSize();
+    document.addEventListener('DOMContentLoaded', function () {
+      return _this.updateSize();
+    }, false);
+    window.addEventListener('resize', function () {
+      return _this.updateSize();
+    }, false);
+  }
+
+  _createClass(RendererCSS, [{
+    key: 'updateSize',
+    value: function updateSize() {
+      this.renderer.setSize(this.container.offsetWidth, this.container.offsetHeight);
+    }
+  }, {
+    key: 'render',
+    value: function render(scene, camera) {
+      this.renderer.render(scene, camera);
+    }
+  }]);
+
+  return RendererCSS;
+}();
+
+exports.default = RendererCSS;
+
+/***/ }),
+/* 14 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _config = __webpack_require__(0);
+
+var _config2 = _interopRequireDefault(_config);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var RendererGL = function () {
+  function RendererGL(scene, container) {
+    var _this = this;
+
+    _classCallCheck(this, RendererGL);
+
+    this.scene = scene;
+    this.container = container;
+    this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    this.renderer.domElement.style.position = 'absolute';
+    this.renderer.domElement.style.top = 0;
+    this.renderer.domElement.style.left = 0;
+    container.appendChild(this.renderer.domElement);
+
+    this.updateSize();
+    document.addEventListener('DOMContentLoaded', function () {
+      return _this.updateSize();
+    }, false);
+    window.addEventListener('resize', function () {
+      return _this.updateSize();
+    }, false);
+  }
+
+  _createClass(RendererGL, [{
+    key: 'updateSize',
+    value: function updateSize() {
+      this.renderer.setSize(this.container.offsetWidth, this.container.offsetHeight);
+    }
+  }, {
+    key: 'render',
+    value: function render(scene, camera) {
+      this.renderer.render(scene, camera);
+    }
+  }]);
+
+  return RendererGL;
+}();
+
+exports.default = RendererGL;
+
+/***/ }),
+/* 15 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var State = function () {
+  function State(styleSheets, stereoElements, siteBackground, webview) {
+    _classCallCheck(this, State);
+
+    this.currentDisplayMode;
+    this.styleSheets = styleSheets;
+    this.stereoElements = stereoElements;
+    this.siteBackground = siteBackground;
+    this.webview = webview;
+  }
+
+  _createClass(State, [{
+    key: 'setDisplayMode',
+    value: function setDisplayMode(targetMode) {
+      if (targetMode == 'mobile' && this.currentDisplayMode != 'mobile') {
+
+        this.webview.showShadows();
+        this.siteBackground.show();
+        this.stereoElements.animate('hide');
+        this.styleSheets.setVRSheet('disable');
+        this.currentDisplayMode = targetMode;
+      } else if (targetMode == 'vr-fullscreen' && this.currentDisplayMode != 'vr-fullscreen') {
+
+        this.webview.hideShadows();
+        this.siteBackground.hide();
+        this.stereoElements.animate('show');
+        this.styleSheets.setVRSheet('enable');
+        this.currentDisplayMode = targetMode;
+      } else if (targetMode == 'vr-windowed' && this.currentDisplayMode != 'vr-windowed') {
+
+        // TODO: 'vr-windowed' mode is complicated. We want to keep the vr stylesheet disabled. But we also want to return the CSS3DObjects to their original positions, without hiding them.
+
+        this.currentDisplayMode = targetMode;
+      } else {
+        console.log("ignored");
+      }
+    }
+  }]);
+
+  return State;
+}();
+
+exports.default = State;
+
+/***/ }),
+/* 16 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _config = __webpack_require__(0);
+
+var _config2 = _interopRequireDefault(_config);
+
+var _utilities = __webpack_require__(1);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var WebView = function () {
+  function WebView(cssRoot, domWrapper) {
+    _classCallCheck(this, WebView);
+
+    // Turn the domWrapper into a CSS3DObject and set position
+    this.object = new THREE.CSS3DObject(domWrapper);
+    this.object.position.z = (0, _utilities.metersToPx)(-_config2.default.WEBVIEW_DISTANCE);
+    this.object.scale.set(_config2.default.WEBVIEW_DISTANCE, _config2.default.WEBVIEW_DISTANCE, _config2.default.WEBVIEW_DISTANCE);
+
+    cssRoot.add(this.object);
+  }
+
+  _createClass(WebView, [{
+    key: 'hideShadows',
+    value: function hideShadows() {
+      domWrapper.style.boxShadow = '0px 0px 80px 0px rgba(0,0,0,0)';
+      // new TWEEN.Tween(webviewShadow.material)
+      //   .to({opacity: 0}, 500)
+      //   .start();
+    }
+  }, {
+    key: 'showShadows',
+    value: function showShadows() {
+      domWrapper.style.boxShadow = '0px 0px 80px 0px rgba(0,0,0,0)';
+      // new TWEEN.Tween(webviewShadow.material)
+      //   .to({opacity: 0}, 500)
+      //   .start();
+    }
+  }]);
+
+  return WebView;
+}();
+
+exports.default = WebView;
 
 /***/ })
 /******/ ]);
