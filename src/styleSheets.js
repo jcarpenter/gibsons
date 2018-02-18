@@ -11,8 +11,6 @@ export default class StyleSheets {
       }
     }
 
-    // disable the vr stylesheet. It should only be active in certain display modes.
-    // this.setVRSheet('disable')
   }
 
   setVRSheet(mode) {

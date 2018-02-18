@@ -20,7 +20,7 @@ export default class WebView {
   }
 
   showShadows() {
-    domWrapper.style.boxShadow = '0px 0px 80px 0px rgba(0,0,0,0)'; 
+    domWrapper.style.boxShadow = '0px 0px 80px 0px rgba(0,0,0,0.05)'; 
     // new TWEEN.Tween(webviewShadow.material)
     //   .to({opacity: 0}, 500)
     //   .start();

@@ -41,16 +41,9 @@ export default class App {
 
     // instantiate styles
     this.styleSheets = new StyleSheets();
+
     // disable any stylesheets with title="vr".
     this.styleSheets.setVRSheet('disable');
-
-    // enter VR display mode.
-
-
-    // enter AR display mode.
-
-
-    
 
     // create container element
     this.container = new Container();
