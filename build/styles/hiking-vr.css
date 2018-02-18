@@ -2,7 +2,7 @@ body {
   --background: url("images/environments/puydesancy.jpg");
   /*--environment: url("models/obj/cube/lightmapped-cube-export-1.obj");
   /*--environment: url("models/obj/vive-controller/vr_controller_vive_1_5.obj");*/
-  /*--environment: url("models/gltf/duck/Duck.gltf");*/
+  --environment: url("models/gltf/duck/Duck.gltf");
 }
 
 #title {
@@ -28,4 +28,14 @@ body {
 #main {
   transition: background 0.5s ease-out;
   background: rgba(0,0,0,0);
+}
+
+#duck {
+  --position: world;
+  transform: translate3d(800px, 1000px, -3000px) scale3d(0.5, 0.5, 0.5);
+}
+
+#outlined-box {
+  --position: world;
+  transform: translate3d(0, 0, -1600px) scale3d(0.001, 0.001, 0.001);
 }

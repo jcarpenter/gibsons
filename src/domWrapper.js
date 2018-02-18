@@ -27,7 +27,6 @@ export default class DomWrapper {
       }
     }
    
-   return this.domWrapper;
-
+    return this.domWrapper;
   }
 }

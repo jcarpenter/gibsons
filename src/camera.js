@@ -5,9 +5,9 @@ export default class Camera {
     const width = renderer.domElement.width;
     const height = renderer.domElement.height;
     this.camera = new THREE.PerspectiveCamera(Config.CAMERA_FOV, width / height, Config.CAMERA_NEAR, Config.CAMERA_FAR);
-    this.camera.scale.set(0.01, 0.01, 0.01);
+    this.camera.scale.set(0.1, 0.1, 0.1);
     this.lookAt = true; // boolean that sets whether camera should look at a target. Is checked per frame by render loop in App. Wish there was a better way.
-    this.lookAtTarget = webview;
+    this.lookAtTarget = new THREE.Vector3(0, 0, -Config.WEBVIEW_DISTANCE);
     this.updateSize(renderer);
     window.addEventListener('resize', () => this.updateSize(renderer), false);
   }
@@ -17,20 +17,21 @@ export default class Camera {
     this.camera.updateProjectionMatrix();
   }
 
-  // the following are camera animations
+  // camera animations
 
   lookAroundEdgesOfWebview() {
-    // camera.updateProjectionMatrix();
-    let tweenA = new TWEEN.Tween( this.camera.rotation )
-      .to({ y: 1 }, 1250 )
+    
+    this.lookAt = true;
+    let tweenA = new TWEEN.Tween( this.camera.position )
+      .to({ x: 1 }, 1250 )
       .easing(TWEEN.Easing.Quadratic.Out)
 
-    let tweenB = new TWEEN.Tween( this.camera.rotation )
-      .to({ y: -1 }, 3000 )
+    let tweenB = new TWEEN.Tween( this.camera.position )
+      .to({ x: -1 }, 3000 )
       .easing(TWEEN.Easing.Quadratic.InOut)
 
-    let tweenC = new TWEEN.Tween( this.camera.rotation )
-      .to({ y: 0 }, 1500 )
+    let tweenC = new TWEEN.Tween( this.camera.position )
+      .to({ x: 0 }, 1500 )
       .easing(TWEEN.Easing.Quadratic.InOut)
 
     tweenA.chain(tweenB);
@@ -40,6 +41,7 @@ export default class Camera {
 
   lookSideToSide() {
 
+    this.lookAt = false;
     let tweenA = new TWEEN.Tween( this.camera.rotation )
       .to({ x: .1, y: .4 }, 1000 )
       .easing(TWEEN.Easing.Quadratic.InOut)
@@ -64,6 +66,7 @@ export default class Camera {
 
   panSideToSide() {
 
+    this.lookAt = false;
     let tweenA = new TWEEN.Tween( this.camera.position )
       .to({ x: 1 }, 1250 )
       .easing(TWEEN.Easing.Quadratic.Out)
@@ -79,5 +82,21 @@ export default class Camera {
     tweenA.chain(tweenB);
     tweenB.chain(tweenC);
     tweenA.start();
+  }
+
+  orthographic() {
+
+    this.lookAt = true;
+
+    new TWEEN.Tween( this.camera )
+      .to({ fov: 6 }, 1000)
+      .easing(TWEEN.Easing.Quadratic.InOut)
+      .start();
+
+    new TWEEN.Tween( this.camera.position )
+      .to({ x: 30, y: 30, z: 30 }, 1250 )
+      .easing(TWEEN.Easing.Quadratic.InOut)
+      .start();
+
   }
 }

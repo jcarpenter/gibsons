@@ -51,6 +51,10 @@ export function metersToPx(meters) {
   return meters * 1000;
 }
 
+export function pxToMeters(px) {
+  return px / 1000;
+}
+
 
 // getTransform and parseMatrix functions taken from Keith Clark:
 // http://keithclark.co.uk/articles/calculating-element-vertex-data-from-css-transforms/

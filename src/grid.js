@@ -1,19 +1,16 @@
-import Config from './config';
-
-export default class Background {
-  constructor(scene, texture, scale = 1) {
-
-    const geometry = new THREE.SphereGeometry(Config.BACKGROUND_RADIUS, 64, 64);
-    geometry.applyMatrix(new THREE.Matrix4().makeScale( -scale, scale, scale ));
+export default class Grid {
+  constructor(scene) {
 
     this.object = new THREE.Mesh(
-      geometry,
-      new THREE.MeshBasicMaterial({ 
+      new THREE.PlaneGeometry(8, 8),
+      new THREE.MeshBasicMaterial({
+        transparent: true,
         shading: THREE.FlatShading,
-        map: new THREE.TextureLoader().load(texture)
+        map: new THREE.TextureLoader().load('images/environments/gray-grid.png')
       })
-    );
-    this.object.rotation.set( 0, -1.57, 0);
+    )
+    this.object.rotation.set(-1.57, 0, 0);
+    this.object.position.set(0, -1.7, 0);
     scene.add(this.object);
   }
 

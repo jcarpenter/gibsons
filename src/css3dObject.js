@@ -94,6 +94,14 @@ export default class Css3dObject {
 
   }
 
+  hide(duration) {
+    this.animate('hide', duration)
+  }
+
+  show(duration) {
+    this.animate('show', duration)
+  }
+  
   animate(mode, duration = 250) {
 
     let tranX, tranY, tranZ, scaleX, scaleY, delay;
@@ -114,8 +122,23 @@ export default class Css3dObject {
       } else if (mode == 'hide') {
 
         delay = duration;
-        this.hide(this.element, delay); // wait until position tweens complete to hide the CSS3D versions.
-        this.show(this.clone, delay); // wait until position tweens complete to show the inline ("clone") versions. This makes transition seamless.
+
+        if (delay > 0) { // wait until position tweens complete to hide the CSS3D versions.
+          window.setTimeout(() => {
+            this.element.style.visibility = 'hidden';
+          }, delay);
+        } else {
+          this.element.style.visibility = 'hidden';
+        }
+
+        if (delay > 0) { // wait until position tweens complete to show the inline ("clone") versions. This makes transition seamless.
+          window.setTimeout(() => {
+            this.clone.style.visibility = 'visible';
+          }, delay);
+        } else {
+          this.clone.style.visibility = 'visible';
+        }
+
         tranX = this.startX;
         tranY = this.startY;
         tranZ = this.startZ;
@@ -160,23 +183,4 @@ export default class Css3dObject {
     }
   }
 
-  hide(target, delay = 0) {
-    if (delay > 0) {
-      window.setTimeout(() => {
-        target.style.visibility = 'hidden';
-      }, delay);
-    } else {
-      target.style.visibility = 'hidden';
-    }
-  }
-
-  show(target, delay = 0) {
-    if (delay > 0) {
-      window.setTimeout(() => {
-        target.style.visibility = 'visible';
-      }, delay);
-    } else {
-      target.style.visibility = 'visible';
-    }
-  }
 }

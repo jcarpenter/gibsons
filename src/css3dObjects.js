@@ -1,15 +1,5 @@
 import Css3dObject from './css3dObject';
-
-import {
-  // toggleWebGLVisibility,
-  // toggleCSSVisibility,
-  // toggleWebviewShadows,
-  // metersToPx,
-  // getTransform,
-  // parseMatrix,
-  parseCssVar,
-  // parseCssUrl
-} from './utilities';
+import {parseCssVar} from './utilities';
 
 export default class Css3dObjects {
   constructor(cssRoot, webview, domWrapper, styleSheets) {
@@ -30,7 +20,7 @@ export default class Css3dObjects {
 
       this.element = this.allElements[i];
       this.transformStyle = parseCssVar(this.element, '--transform-style');
-      this.transform =  parseCssVar(this.element, 'transform');
+      this.transform = parseCssVar(this.element, 'transform');
 
       // It's not enough to check for --transform-style: stereo, because we get false positives on children, which inherit it from parent.
       // We can get the precision we need by also checking if they have transforms.
@@ -47,12 +37,17 @@ export default class Css3dObjects {
     styleSheets.setVRSheet('disable');
   }
 
-  // for each css3dObject instance in stereoElements array, call it's animate function
-  // 'mode' is either 'hide' or 'show'.
-  animate(mode, duration) {
+  // show or hide each css3dObject instance in stereoElements array
 
+  hide(duration) {
     this.stereoElements.forEach((e) => {
-      e.animate(mode, duration);
+      e.hide(duration);
+    })
+  }
+
+  show(duration) {
+    this.stereoElements.forEach((e) => {
+      e.show(duration);
     })
   }
 }

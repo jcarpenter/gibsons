@@ -60,7 +60,7 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 3);
+/******/ 	return __webpack_require__(__webpack_require__.s = 5);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -95,6 +95,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.metersToPx = metersToPx;
+exports.pxToMeters = pxToMeters;
 exports.getTransform = getTransform;
 exports.parseMatrix = parseMatrix;
 exports.parseCssVar = parseCssVar;
@@ -150,6 +151,10 @@ exports.parseCssUrl = parseCssUrl;
 
 function metersToPx(meters) {
   return meters * 1000;
+}
+
+function pxToMeters(px) {
+  return px / 1000;
 }
 
 // getTransform and parseMatrix functions taken from Keith Clark:
@@ -275,7 +280,7 @@ var StyleSheets = function () {
     }
 
     // disable the vr stylesheet. It should only be active in certain display modes.
-    this.setVRSheet('disable');
+    // this.setVRSheet('disable')
   }
 
   _createClass(StyleSheets, [{
@@ -301,7 +306,147 @@ exports.default = StyleSheets;
 "use strict";
 
 
-var _app = __webpack_require__(4);
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _config = __webpack_require__(0);
+
+var _config2 = _interopRequireDefault(_config);
+
+var _loaders = __webpack_require__(4);
+
+var _utilities = __webpack_require__(1);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+{}
+
+var Model = function () {
+  function Model(sceneFar, sceneNear, element) {
+    var _this = this;
+
+    _classCallCheck(this, Model);
+
+    this.group = new THREE.Group();
+    this.gltf;
+    this.src = element.getAttribute('src');
+    this.coordinateSystem = (0, _utilities.parseCssVar)(element, '--position');
+    this.transform = (0, _utilities.getTransform)(element);
+
+    // add to either far or near scenes, depending on whether CSS Z transform is closer or further than webview.
+    if ((0, _utilities.pxToMeters)(this.transform.translate.z) < -_config2.default.WEBVIEW_DISTANCE) {
+      sceneFar.add(this.group);
+    } else {
+      sceneNear.add(this.group);
+    }
+
+    _loaders.loaderGLTF.load(this.src, function (gltf) {
+
+      _this.gltf = gltf.scene;
+
+      gltf.scene.position.set((0, _utilities.pxToMeters)(_this.transform.translate.x), (0, _utilities.pxToMeters)(_this.transform.translate.y), (0, _utilities.pxToMeters)(_this.transform.translate.z));
+
+      gltf.scene.scale.set(_this.transform.scale.x, _this.transform.scale.y, _this.transform.scale.z);
+
+      // console.log(this.transform.scale.x, this.transform.scale.y, this.transform.scale.z);
+      _this.group.add(_this.gltf);
+    });
+  }
+
+  _createClass(Model, [{
+    key: 'hide',
+    value: function hide() {
+      this.group.visible = false;
+    }
+  }, {
+    key: 'show',
+    value: function show() {
+      this.group.visible = true;
+    }
+  }]);
+
+  return Model;
+}();
+
+exports.default = Model;
+
+/***/ }),
+/* 4 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.loaderOBJ = exports.loaderGLTF = undefined;
+exports.loadOBJ = loadOBJ;
+
+var _utilities = __webpack_require__(1);
+
+var loaderGLTF = exports.loaderGLTF = new THREE.GLTF2Loader();
+var loaderOBJ = exports.loaderOBJ = new THREE.OBJLoader2();
+
+// export function loadGLTF(src) {
+
+//   // get URL of texture from CSS custom property
+//   // const model_url = parseCssUrl(document.querySelector(element), customProp);
+
+//   // load url
+//   loaderGLTF.load( src, function ( gltf ) {
+//     // sceneGL.add( gltf.scene );
+
+//     gltf.animations; // Array: THREE.AnimationClip
+//     gltf.scene;      // THREE.Scene
+//     gltf.scenes;     // Array: THREE.Scene
+//     gltf.cameras;    // Array: THREE.Camera
+
+//     // gltf.scene.position.set(0, 0, -4);
+//     return gltf;
+//     console.log(gltf);
+
+//   } );
+// }
+
+function loadOBJ(element, customProp) {
+
+  // get URL of texture from CSS custom property
+  var model_url = (0, _utilities.parseCssUrl)(document.querySelector(element), customProp);
+
+  // load url
+  loaderOBJ.load(model_url, function (obj) {
+    // sceneGL.add( obj );
+    return obj;
+  });
+}
+/*
+export function addLights() {
+  var spotLight = new THREE.SpotLight( 0xffffff );
+  spotLight.position.set( 100, 1000, 100 );
+  spotLight.castShadow = true;
+  spotLight.shadow.mapSize.width = 1024;
+  spotLight.shadow.mapSize.height = 1024;
+  spotLight.shadow.camera.near = 500;
+  spotLight.shadow.camera.far = 4000;
+  spotLight.shadow.camera.fov = 30;
+  sceneGL.add( spotLight );
+}
+*/
+
+/***/ }),
+/* 5 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _app = __webpack_require__(6);
 
 var _app2 = _interopRequireDefault(_app);
 
@@ -316,7 +461,7 @@ window.onload = function () {
 };
 
 /***/ }),
-/* 4 */
+/* 6 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -326,13 +471,11 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-var _background = __webpack_require__(5);
+var _background = __webpack_require__(7);
 
 var _background2 = _interopRequireDefault(_background);
 
-var _camera = __webpack_require__(6);
+var _camera = __webpack_require__(8);
 
 var _camera2 = _interopRequireDefault(_camera);
 
@@ -340,35 +483,51 @@ var _config = __webpack_require__(0);
 
 var _config2 = _interopRequireDefault(_config);
 
-var _container = __webpack_require__(7);
+var _container = __webpack_require__(9);
 
 var _container2 = _interopRequireDefault(_container);
 
-var _css3dObjects = __webpack_require__(8);
+var _css3dObjects = __webpack_require__(10);
 
 var _css3dObjects2 = _interopRequireDefault(_css3dObjects);
 
-var _cssRoot = __webpack_require__(10);
+var _cssRoot = __webpack_require__(12);
 
 var _cssRoot2 = _interopRequireDefault(_cssRoot);
 
-var _domWrapper = __webpack_require__(11);
+var _domWrapper = __webpack_require__(13);
 
 var _domWrapper2 = _interopRequireDefault(_domWrapper);
 
-var _events = __webpack_require__(12);
+var _environment = __webpack_require__(14);
+
+var _environment2 = _interopRequireDefault(_environment);
+
+var _events = __webpack_require__(15);
 
 var _events2 = _interopRequireDefault(_events);
 
-var _rendererCSS = __webpack_require__(13);
+var _lights = __webpack_require__(16);
+
+var _lights2 = _interopRequireDefault(_lights);
+
+var _grid = __webpack_require__(17);
+
+var _grid2 = _interopRequireDefault(_grid);
+
+var _models = __webpack_require__(18);
+
+var _models2 = _interopRequireDefault(_models);
+
+var _rendererCSS = __webpack_require__(19);
 
 var _rendererCSS2 = _interopRequireDefault(_rendererCSS);
 
-var _rendererGL = __webpack_require__(14);
+var _rendererGL = __webpack_require__(20);
 
 var _rendererGL2 = _interopRequireDefault(_rendererGL);
 
-var _state = __webpack_require__(15);
+var _state = __webpack_require__(21);
 
 var _state2 = _interopRequireDefault(_state);
 
@@ -376,7 +535,7 @@ var _styleSheets = __webpack_require__(2);
 
 var _styleSheets2 = _interopRequireDefault(_styleSheets);
 
-var _webview = __webpack_require__(16);
+var _webview = __webpack_require__(22);
 
 var _webview2 = _interopRequireDefault(_webview);
 
@@ -385,72 +544,93 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 // app class instantiates and ties all of the components together, starts the loading process and renders the main loop
-var App = function () {
-  function App() {
-    _classCallCheck(this, App);
+var App = function App() {
+  _classCallCheck(this, App);
 
-    // create container element
-    this.container = new _container2.default();
+  //instantiate styles
+  // this.styleSheets = new StyleSheets();
+  // this.styleSheets.setVRSheet('disable');
+  console.log("GorillassssTTT");
 
-    // create scenes
-    this.sceneGL = new THREE.Scene();
-    this.sceneCSS = new THREE.Scene();
+  /*
+   // create container element
+  this.container = new Container();
+   // create scenes
+  this.sceneGLFar = new THREE.Scene()
+  this.sceneCSS = new THREE.Scene()
+  this.sceneGLNear = new THREE.Scene()
+  
+  // instantiate renderers
+  this.rendererGLFar = new RendererGL(this.sceneGLFar, this.container.container);
+  this.rendererCSS = new RendererCSS(this.sceneCSS, this.container.container);
+  this.rendererGLNear = new RendererGL(this.sceneGLNear, this.container.container);
+  this.rendererGLNear.renderer.domElement.style.pointerEvents = 'none';
+   // instantiate camera
+  this.camera = new Camera(this.rendererGLNear.renderer);
+   // instantiate cssRoot object (we add all CSS objects to this)
+  this.cssRoot = new CssRoot(this.sceneCSS);
+   // instantiate 'domWrapper': an element containing all the original HTML elements
+  this.domWrapper = new DomWrapper();
+   // instantiate 'webview': simply the domWrapper converted to a CSS3D object, sized and positioned like a browser window in ChromeVR.
+  this.webview = new WebView(this.cssRoot, this.domWrapper);
+   //instantiate styles
+  this.styleSheets = new StyleSheets();
+   // instantiate CSS3D objects. Pass in cssRoot, webview and domWrapper. They're needed for setup purposes.
+  this.stereoElements = new Css3dObjects(this.cssRoot, this.webview, this.domWrapper, this.styleSheets); // array
+   // instantiate environment model
+  this.environment = new Environment(this.sceneGLFar, this.styleSheets);
+   // instantiate <model> elements
+  this.models = new Models(this.sceneGLFar, this.sceneGLNear, this.domWrapper, this.styleSheets);
+   // instantiate lighting
+  // we need to create one instance of the lighting for each GL renderer (near and far).
+  this.lightsFar = new Lights(this.sceneGLFar);
+  this.lightsNear = new Lights(this.sceneGLNear);
+   // instantiate backgrounds
+  this.browserBackground = new Background(this.sceneGLFar, 'images/environments/gray-gradient.jpg', 1);
+  this.grid = new Grid(this.sceneGLFar);
+  this.siteBackground = new Background(this.sceneGLFar, 'images/environments/puydesancy.jpg', 0.9); // TODO: make this not hard-coded?
+  this.siteBackground.object.rotation.set( 0, -1.57, 0);
+   // instantiate state
+  this.state = new State(this.styleSheets, this.stereoElements, this.siteBackground, this.grid, this.webview, this.environment, this.models);
+  this.state.setDisplayMode('mobile');
+   // instantiate events
+  this.events = new Events(this.camera, this.state,)
+   // start render loop
+  this.render();
+  */
+}
 
-    // instantiate renderers
-    this.rendererGL = new _rendererGL2.default(this.sceneGL, this.container.container);
-    this.rendererCSS = new _rendererCSS2.default(this.sceneCSS, this.container.container);
+// Start by doing nothing to the site. Ignore `title="vr"` stylesheet.
+// If mobile phones, is a mobile site.
+// If desktop, can be either mobile or VR site
+// If AR capable mobile, can be mobile or AR site.
+// Controls to turn into CSS3D live in 2D menu. With key presses wired.
 
-    // instantiate camera
-    this.camera = new _camera2.default(this.rendererGL.renderer);
+// Display in default presentation mode (e.g. mobile, desktop)
+// Menu or keyboard shortcuts to switch between modes.
+// When user presses VR button, kick into VR display mode.
 
-    // instantiate cssRoot object (we add all CSS objects to this)
-    this.cssRoot = new _cssRoot2.default(this.sceneCSS);
+/*
+  render() {
+    TWEEN.update();
 
-    // instantiate 'domWrapper': an element containing all the original HTML elements
-    this.domWrapper = new _domWrapper2.default();
-
-    // instantiate 'webview': simply the domWrapper converted to a CSS3D object, sized and positioned like a browser window in ChromeVR.
-    this.webview = new _webview2.default(this.cssRoot, this.domWrapper);
-
-    //instantiate styles
-    this.styleSheets = new _styleSheets2.default();
-
-    // instantiate CSS3D objects. Pass in cssRoot, webview and domWrapper. They're needed for setup purposes.
-    this.stereoElements = new _css3dObjects2.default(this.cssRoot, this.webview, this.domWrapper, this.styleSheets); // array
-
-    // instantiate backgrounds
-    this.browserBackground = new _background2.default(this.sceneGL, 'images/environments/graygrid-360.png', 1);
-    this.siteBackground = new _background2.default(this.sceneGL, 'images/environments/puydesancy.jpg', 0.9); // TODO: make this not hard-coded
-    this.siteBackground.object.rotation.set(0, -1.57, 0);
-
-    // instantiate state
-    this.state = new _state2.default(this.styleSheets, this.stereoElements, this.siteBackground, this.webview);
-    this.state.setDisplayMode('mobile');
-
-    // instantiate events
-    this.events = new _events2.default(this.camera, this.state);
-
-    // start render loop
-    this.render();
-  }
-
-  _createClass(App, [{
-    key: 'render',
-    value: function render() {
-      TWEEN.update();
-      this.rendererGL.render(this.sceneGL, this.camera.camera);
-      this.rendererCSS.render(this.sceneCSS, this.camera.camera);
-      requestAnimationFrame(this.render.bind(this)); // bind the main class instead of window object
+    // lookAt logic has to check per-frame in the render loop, AFAIK. Variable names and paths here are pretty clunky.
+    if(this.camera.lookAt) { 
+        this.camera.camera.lookAt(this.camera.lookAtTarget);
     }
-  }]);
 
-  return App;
-}();
+    this.rendererGLFar.render(this.sceneGLFar, this.camera.camera);
+    this.rendererCSS.render(this.sceneCSS, this.camera.camera);
+    this.rendererGLNear.render(this.sceneGLNear, this.camera.camera);
+
+    requestAnimationFrame(this.render.bind(this)); // bind the main class instead of window object
+  }*/
+;
 
 exports.default = App;
 
 /***/ }),
-/* 5 */
+/* 7 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -490,15 +670,15 @@ var Background = function () {
   _createClass(Background, [{
     key: 'hide',
     value: function hide() {
-      this.object.visible = true;
-      new TWEEN.Tween(this.object.material).to({ opacity: 1 }, 250).delay(250).start();
+      new TWEEN.Tween(this.object.material).to({ opacity: 0 }, 250).onComplete(function () {
+        this.object.visible = false;
+      }.bind(this)).start();
     }
   }, {
     key: 'show',
     value: function show() {
-      new TWEEN.Tween(this.object.material).to({ opacity: 0 }, 250).onComplete(function () {
-        this.object.visible = false;
-      }.bind(this)).start();
+      this.object.visible = true;
+      new TWEEN.Tween(this.object.material).to({ opacity: 1 }, 250).delay(250).start();
     }
   }]);
 
@@ -508,7 +688,7 @@ var Background = function () {
 exports.default = Background;
 
 /***/ }),
-/* 6 */
+/* 8 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -529,7 +709,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var Camera = function () {
-  function Camera(renderer) {
+  function Camera(renderer, webview) {
     var _this = this;
 
     _classCallCheck(this, Camera);
@@ -537,7 +717,9 @@ var Camera = function () {
     var width = renderer.domElement.width;
     var height = renderer.domElement.height;
     this.camera = new THREE.PerspectiveCamera(_config2.default.CAMERA_FOV, width / height, _config2.default.CAMERA_NEAR, _config2.default.CAMERA_FAR);
-    this.camera.scale.set(0.01, 0.01, 0.01);
+    this.camera.scale.set(0.1, 0.1, 0.1);
+    this.lookAt = true; // boolean that sets whether camera should look at a target. Is checked per frame by render loop in App. Wish there was a better way.
+    this.lookAtTarget = new THREE.Vector3(0, 0, -_config2.default.WEBVIEW_DISTANCE);
     this.updateSize(renderer);
     window.addEventListener('resize', function () {
       return _this.updateSize(renderer);
@@ -551,17 +733,18 @@ var Camera = function () {
       this.camera.updateProjectionMatrix();
     }
 
-    // the following are camera animations
+    // camera animations
 
   }, {
     key: 'lookAroundEdgesOfWebview',
     value: function lookAroundEdgesOfWebview() {
-      // camera.updateProjectionMatrix();
-      var tweenA = new TWEEN.Tween(this.camera.rotation).to({ y: 1 }, 1250).easing(TWEEN.Easing.Quadratic.Out);
 
-      var tweenB = new TWEEN.Tween(this.camera.rotation).to({ y: -1 }, 3000).easing(TWEEN.Easing.Quadratic.InOut);
+      this.lookAt = true;
+      var tweenA = new TWEEN.Tween(this.camera.position).to({ x: 1 }, 1250).easing(TWEEN.Easing.Quadratic.Out);
 
-      var tweenC = new TWEEN.Tween(this.camera.rotation).to({ y: 0 }, 1500).easing(TWEEN.Easing.Quadratic.InOut);
+      var tweenB = new TWEEN.Tween(this.camera.position).to({ x: -1 }, 3000).easing(TWEEN.Easing.Quadratic.InOut);
+
+      var tweenC = new TWEEN.Tween(this.camera.position).to({ x: 0 }, 1500).easing(TWEEN.Easing.Quadratic.InOut);
 
       tweenA.chain(tweenB);
       tweenB.chain(tweenC);
@@ -571,6 +754,7 @@ var Camera = function () {
     key: 'lookSideToSide',
     value: function lookSideToSide() {
 
+      this.lookAt = false;
       var tweenA = new TWEEN.Tween(this.camera.rotation).to({ x: .1, y: .4 }, 1000).easing(TWEEN.Easing.Quadratic.InOut);
 
       var tweenB = new TWEEN.Tween(this.camera.rotation).to({ x: .05, y: -.7 }, 1600).easing(TWEEN.Easing.Quadratic.InOut);
@@ -588,6 +772,7 @@ var Camera = function () {
     key: 'panSideToSide',
     value: function panSideToSide() {
 
+      this.lookAt = false;
       var tweenA = new TWEEN.Tween(this.camera.position).to({ x: 1 }, 1250).easing(TWEEN.Easing.Quadratic.Out);
 
       var tweenB = new TWEEN.Tween(this.camera.position).to({ x: -1 }, 3000).easing(TWEEN.Easing.Quadratic.InOut);
@@ -598,6 +783,16 @@ var Camera = function () {
       tweenB.chain(tweenC);
       tweenA.start();
     }
+  }, {
+    key: 'orthographic',
+    value: function orthographic() {
+
+      this.lookAt = true;
+
+      new TWEEN.Tween(this.camera).to({ fov: 6 }, 1000).easing(TWEEN.Easing.Quadratic.InOut).start();
+
+      new TWEEN.Tween(this.camera.position).to({ x: 30, y: 30, z: 30 }, 1250).easing(TWEEN.Easing.Quadratic.InOut).start();
+    }
   }]);
 
   return Camera;
@@ -606,7 +801,7 @@ var Camera = function () {
 exports.default = Camera;
 
 /***/ }),
-/* 7 */
+/* 9 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -634,7 +829,7 @@ var Container = function Container() {
 exports.default = Container;
 
 /***/ }),
-/* 8 */
+/* 10 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -646,7 +841,7 @@ Object.defineProperty(exports, "__esModule", {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-var _css3dObject = __webpack_require__(9);
+var _css3dObject = __webpack_require__(11);
 
 var _css3dObject2 = _interopRequireDefault(_css3dObject);
 
@@ -693,16 +888,20 @@ var Css3dObjects = function () {
     styleSheets.setVRSheet('disable');
   }
 
-  // for each css3dObject instance in stereoElements array, call it's animate function
-  // 'mode' is either 'hide' or 'show'.
-
+  // show or hide each css3dObject instance in stereoElements array
 
   _createClass(Css3dObjects, [{
-    key: 'animate',
-    value: function animate(mode, duration) {
-
+    key: 'hide',
+    value: function hide(duration) {
       this.stereoElements.forEach(function (e) {
-        e.animate(mode, duration);
+        e.hide(duration);
+      });
+    }
+  }, {
+    key: 'show',
+    value: function show(duration) {
+      this.stereoElements.forEach(function (e) {
+        e.show(duration);
       });
     }
   }]);
@@ -713,7 +912,7 @@ var Css3dObjects = function () {
 exports.default = Css3dObjects;
 
 /***/ }),
-/* 9 */
+/* 11 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -819,8 +1018,20 @@ var Css3dObject = function () {
   }
 
   _createClass(Css3dObject, [{
+    key: 'hide',
+    value: function hide(duration) {
+      this.animate('hide', duration);
+    }
+  }, {
+    key: 'show',
+    value: function show(duration) {
+      this.animate('show', duration);
+    }
+  }, {
     key: 'animate',
     value: function animate(mode) {
+      var _this = this;
+
       var duration = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 250;
 
 
@@ -846,8 +1057,25 @@ var Css3dObject = function () {
         } else if (mode == 'hide') {
 
           delay = duration;
-          this.hide(this.element, delay); // wait until position tweens complete to hide the CSS3D versions.
-          this.show(this.clone, delay); // wait until position tweens complete to show the inline ("clone") versions. This makes transition seamless.
+
+          if (delay > 0) {
+            // wait until position tweens complete to hide the CSS3D versions.
+            window.setTimeout(function () {
+              _this.element.style.visibility = 'hidden';
+            }, delay);
+          } else {
+            this.element.style.visibility = 'hidden';
+          }
+
+          if (delay > 0) {
+            // wait until position tweens complete to show the inline ("clone") versions. This makes transition seamless.
+            window.setTimeout(function () {
+              _this.clone.style.visibility = 'visible';
+            }, delay);
+          } else {
+            this.clone.style.visibility = 'visible';
+          }
+
           tranX = this.startX;
           tranY = this.startY;
           tranZ = this.startZ;
@@ -876,32 +1104,6 @@ var Css3dObject = function () {
         }
       }
     }
-  }, {
-    key: 'hide',
-    value: function hide(target) {
-      var delay = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
-
-      if (delay > 0) {
-        window.setTimeout(function () {
-          target.style.visibility = 'hidden';
-        }, delay);
-      } else {
-        target.style.visibility = 'hidden';
-      }
-    }
-  }, {
-    key: 'show',
-    value: function show(target) {
-      var delay = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
-
-      if (delay > 0) {
-        window.setTimeout(function () {
-          target.style.visibility = 'visible';
-        }, delay);
-      } else {
-        target.style.visibility = 'visible';
-      }
-    }
   }]);
 
   return Css3dObject;
@@ -910,7 +1112,7 @@ var Css3dObject = function () {
 exports.default = Css3dObject;
 
 /***/ }),
-/* 10 */
+/* 12 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -936,7 +1138,7 @@ var CssRoot = function CssRoot(scene) {
 exports.default = CssRoot;
 
 /***/ }),
-/* 11 */
+/* 13 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -990,7 +1192,92 @@ var DomWrapper = function DomWrapper() {
 exports.default = DomWrapper;
 
 /***/ }),
-/* 12 */
+/* 14 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _model = __webpack_require__(3);
+
+var _model2 = _interopRequireDefault(_model);
+
+var _loaders = __webpack_require__(4);
+
+var _utilities = __webpack_require__(1);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var Environment = function () {
+  function Environment(sceneFar, styleSheets) {
+    var _this = this;
+
+    _classCallCheck(this, Environment);
+
+    // check for environment CSS value
+    // if exists, create Model instance, set to default scale and position.
+
+    // turn on vr stylesheet so we can parse it's values. We'll turn it off at the end of this function.
+    styleSheets.setVRSheet('enable');
+
+    this.group = new THREE.Group();
+    this.gltf;
+    this.src = (0, _utilities.parseCssUrl)(document.body, '--environment');
+    sceneFar.add(this.group);
+
+    if (this.src) {
+
+      _loaders.loaderGLTF.load(this.src, function (gltf) {
+
+        _this.gltf = gltf.scene;
+
+        // gltf.scene.position.set(
+        //   pxToMeters(this.transform.translate.x),
+        //   pxToMeters(this.transform.translate.y),
+        //   pxToMeters(this.transform.translate.z)
+        // );
+
+        // gltf.scene.scale.set(
+        //   this.transform.scale.x,
+        //   this.transform.scale.y,
+        //   this.transform.scale.z
+        // );
+
+        _this.group.add(_this.gltf);
+      });
+    }
+
+    // turn off the vr stylesheet. We don't want it active and adjusting layout until we're in VR mode.
+    styleSheets.setVRSheet('disable');
+  }
+
+  _createClass(Environment, [{
+    key: 'hide',
+    value: function hide() {
+      this.group.visible = false;
+    }
+  }, {
+    key: 'show',
+    value: function show() {
+      this.group.visible = true;
+    }
+  }]);
+
+  return Environment;
+}();
+
+exports.default = Environment;
+
+/***/ }),
+/* 15 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1016,6 +1303,7 @@ var Events = function Events(camera, state) {
         case 49:
           {
             // 1
+            state.demoMode.enabled = false;
             state.setDisplayMode('mobile');
             handled = true;
             break;
@@ -1023,6 +1311,7 @@ var Events = function Events(camera, state) {
         case 50:
           {
             // 2
+            state.demoMode.enabled = false;
             state.setDisplayMode('vr-fullscreen');
             handled = true;
             break;
@@ -1030,28 +1319,44 @@ var Events = function Events(camera, state) {
         case 51:
           {
             // 3
-            state.setDisplayMode('vr-windowed');
+            state.demoMode.enabled = true;
+            state.setDisplayMode('vr-fullscreen');
             handled = true;
             break;
           }
         case 52:
           {
             // 4
-            camera.lookAroundEdgesOfWebview();
+            state.demoMode.enabled = false;
+            state.setDisplayMode('vr-windowed');
             handled = true;
             break;
           }
         case 53:
           {
             // 5
-            camera.lookSideToSide();
+            camera.lookAroundEdgesOfWebview();
             handled = true;
             break;
           }
         case 54:
           {
             // 6
+            camera.lookSideToSide();
+            handled = true;
+            break;
+          }
+        case 55:
+          {
+            // 7
             camera.panSideToSide();
+            handled = true;
+            break;
+          }
+        case 56:
+          {
+            // 8
+            camera.orthographic();
             handled = true;
             break;
           }
@@ -1072,7 +1377,152 @@ var Events = function Events(camera, state) {
 exports.default = Events;
 
 /***/ }),
-/* 13 */
+/* 16 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var Lights = function Lights(scene) {
+  _classCallCheck(this, Lights);
+
+  this.light = new THREE.HemisphereLight(0xffffff, 0xB0B0B0, 1.2);
+  scene.add(this.light);
+};
+
+exports.default = Lights;
+
+/***/ }),
+/* 17 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var Grid = function () {
+  function Grid(scene) {
+    _classCallCheck(this, Grid);
+
+    this.object = new THREE.Mesh(new THREE.PlaneGeometry(8, 8), new THREE.MeshBasicMaterial({
+      transparent: true,
+      shading: THREE.FlatShading,
+      map: new THREE.TextureLoader().load('images/environments/gray-grid.png')
+    }));
+    this.object.rotation.set(-1.57, 0, 0);
+    this.object.position.set(0, -1.7, 0);
+    scene.add(this.object);
+  }
+
+  _createClass(Grid, [{
+    key: 'hide',
+    value: function hide() {
+      new TWEEN.Tween(this.object.material).to({ opacity: 0 }, 250).onComplete(function () {
+        this.object.visible = false;
+      }.bind(this)).start();
+    }
+  }, {
+    key: 'show',
+    value: function show() {
+      this.object.visible = true;
+      new TWEEN.Tween(this.object.material).to({ opacity: 1 }, 250).delay(250).start();
+    }
+  }]);
+
+  return Grid;
+}();
+
+exports.default = Grid;
+
+/***/ }),
+/* 18 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _model = __webpack_require__(3);
+
+var _model2 = _interopRequireDefault(_model);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+// import { parseCssVar } from './utilities';
+
+var Models = function () {
+  function Models(sceneFar, sceneNear, domWrapper, styleSheets) {
+    _classCallCheck(this, Models);
+
+    // parse page
+    // find models
+    // get src attribute value
+    // load model from that src
+    // position world or window?
+    // position 
+
+    // turn on vr stylesheet so we can parse it's values. We'll turn it off at the end of this function.
+    styleSheets.setVRSheet('enable');
+
+    this.modelElements = domWrapper.getElementsByTagName('model');
+    this.modelObjects = [];
+
+    // if there are <model> elements in the HTML, create a three.js model instance for each.
+    if (this.modelElements.length > 0) {
+
+      for (var i = 0; i < this.modelElements.length; i++) {
+        this.model = new _model2.default(sceneFar, sceneNear, this.modelElements[i]);
+        this.modelObjects.push(this.model);
+      }
+    };
+
+    // turn off the vr stylesheet. We don't want it active and adjusting layout until we're in VR mode.
+    styleSheets.setVRSheet('disable');
+  }
+
+  _createClass(Models, [{
+    key: 'hide',
+    value: function hide() {
+      this.modelObjects.forEach(function (e) {
+        e.hide();
+      });
+    }
+  }, {
+    key: 'show',
+    value: function show() {
+      this.modelObjects.forEach(function (e) {
+        e.show();
+      });
+    }
+  }]);
+
+  return Models;
+}();
+
+exports.default = Models;
+
+/***/ }),
+/* 19 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1133,7 +1583,7 @@ var RendererCSS = function () {
 exports.default = RendererCSS;
 
 /***/ }),
-/* 14 */
+/* 20 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1194,7 +1644,7 @@ var RendererGL = function () {
 exports.default = RendererGL;
 
 /***/ }),
-/* 15 */
+/* 21 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1209,41 +1659,131 @@ var _createClass = function () { function defineProperties(target, props) { for 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var State = function () {
-  function State(styleSheets, stereoElements, siteBackground, webview) {
+  function State(styleSheets, stereoElements, siteBackground, grid, webview, environment, models) {
     _classCallCheck(this, State);
 
-    this.currentDisplayMode;
     this.styleSheets = styleSheets;
     this.stereoElements = stereoElements;
     this.siteBackground = siteBackground;
+    this.grid = grid;
     this.webview = webview;
+    this.environment = environment;
+    this.models = models;
+
+    // variable for current display mode
+    this.currentDisplayMode;
+
+    // set up demo mode. 
+    // demo mode is used to turn features on one by one, to help show how they work.
+    this.demoMode = {};
+    this.demoMode.enabled = false;
+    this.demoMode.steps = ['Disable all', 'Show site background', 'Show window transparency', 'Show window relative transforms', 'Show environment', 'Show window relative models', 'Show world relative transforms and models'];
+    this.demoMode.currentStep = 0;
   }
+
+  // handle display mode updates
+
 
   _createClass(State, [{
     key: 'setDisplayMode',
     value: function setDisplayMode(targetMode) {
-      if (targetMode == 'mobile' && this.currentDisplayMode != 'mobile') {
 
-        this.webview.showShadows();
-        this.siteBackground.show();
-        this.stereoElements.animate('hide');
-        this.styleSheets.setVRSheet('disable');
-        this.currentDisplayMode = targetMode;
-      } else if (targetMode == 'vr-fullscreen' && this.currentDisplayMode != 'vr-fullscreen') {
+      if (targetMode == 'mobile' && this.currentDisplayMode !== 'mobile') {
 
-        this.webview.hideShadows();
-        this.siteBackground.hide();
-        this.stereoElements.animate('show');
-        this.styleSheets.setVRSheet('enable');
-        this.currentDisplayMode = targetMode;
-      } else if (targetMode == 'vr-windowed' && this.currentDisplayMode != 'vr-windowed') {
+        this.enableMobileMode();
+      } else if (targetMode == 'vr-fullscreen' && this.demoMode.enabled == false) {
 
-        // TODO: 'vr-windowed' mode is complicated. We want to keep the vr stylesheet disabled. But we also want to return the CSS3DObjects to their original positions, without hiding them.
+        this.enableVrFullscreenMode();
+      } else if (targetMode == 'vr-fullscreen' && this.demoMode.enabled == true) {
 
-        this.currentDisplayMode = targetMode;
+        this.enableVrFullscreenDemoMode();
+      } else if (targetMode == 'vr-windowed' && this.currentDisplayMode !== 'vr-windowed') {
+
+        this.enableVrWindowedMode();
       } else {
+
         console.log("ignored");
       }
+
+      this.currentDisplayMode = targetMode;
+    }
+  }, {
+    key: 'enableMobileMode',
+    value: function enableMobileMode() {
+      this.webview.showShadows();
+      this.grid.show();
+      this.siteBackground.hide();
+      this.environment.hide();
+      this.models.hide();
+      this.stereoElements.hide();
+      this.styleSheets.setVRSheet('disable');
+    }
+  }, {
+    key: 'enableVrFullscreenMode',
+    value: function enableVrFullscreenMode() {
+      this.webview.hideShadows();
+      this.grid.hide();
+      this.siteBackground.show();
+      this.environment.show();
+      this.models.show();
+      this.stereoElements.show();
+      this.styleSheets.setVRSheet('enable');
+    }
+  }, {
+    key: 'enableVrFullscreenDemoMode',
+    value: function enableVrFullscreenDemoMode() {
+
+      // increment demo counter
+      if (this.demoMode.currentStep < this.demoMode.steps.length - 1) {
+        this.demoMode.currentStep += 1;
+      } else {
+        this.demoMode.currentStep = 0;
+      }
+
+      // trigger demo next step in demo sequence
+      if (this.demoMode.currentStep == 1) {
+        // —— show site background
+
+        this.webview.hideShadows();
+        this.grid.hide();
+        this.siteBackground.show();
+      } else if (this.demoMode.currentStep == 2) {
+        // —— show window transparency
+
+        this.styleSheets.setVRSheet('enable');
+      } else if (this.demoMode.currentStep == 3) {
+        // —— show window-relative transforms
+
+        this.stereoElements.show();
+      } else if (this.demoMode.currentStep == 4) {
+        // —— show 3d environment
+
+        this.environment.show();
+      } else if (this.demoMode.currentStep == 5) {
+        // —— show window-relative models
+
+        this.models.show();
+        // TODO: distinguish window relative from world relative
+      } else if (this.demoMode.currentStep == 6) {// —— Show world relative transforms and models
+
+        // TODO
+
+      } else if (this.demoMode.currentStep == 0) {
+        // —— disable all
+
+        this.webview.showShadows();
+        this.grid.show();
+        this.siteBackground.hide();
+        this.environment.hide();
+        this.models.hide();
+        this.stereoElements.hide();
+        this.styleSheets.setVRSheet('disable');
+      }
+    }
+  }, {
+    key: 'enableVrWindowedMode',
+    value: function enableVrWindowedMode() {
+      // TODO: 'vr-windowed' mode is complicated. We want to keep the vr stylesheet disabled. But we also want to return the CSS3DObjects to their original positions, without hiding them.
     }
   }]);
 
@@ -1253,7 +1793,7 @@ var State = function () {
 exports.default = State;
 
 /***/ }),
-/* 16 */
+/* 22 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
