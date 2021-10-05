@@ -7,6 +7,11 @@ A prototype designed to
 
 ![](./demo.gif)
 
+## Getting started
+
+* `npm install` - Install dependencies
+* `npm run start` - Build bundle and start development server
+
 ## How it works
 
 A standard responsive website is turned into an XR site through a combination of JS custom CSS properties.
