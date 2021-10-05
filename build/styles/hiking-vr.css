@@ -2,7 +2,7 @@ body {
   --background: url("images/environments/puydesancy.jpg");
   /*--environment: url("models/obj/cube/lightmapped-cube-export-1.obj");
   /*--environment: url("models/obj/vive-controller/vr_controller_vive_1_5.obj");*/
-  --environment: url("models/gltf/duck/Duck.gltf");
+  /* --environment: url("models/gltf/duck/Duck.gltf"); */
 }
 
 #title {

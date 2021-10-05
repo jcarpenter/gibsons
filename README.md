@@ -5,6 +5,8 @@ A prototype designed to
 1) Experiment with proposed 3D HTML/CSS layout standards
 2) Communicate those proposals with live visuals and code editing
 
+![](./demo.gif)
+
 ## How it works
 
 A standard responsive website is turned into an XR site through a combination of JS custom CSS properties.
