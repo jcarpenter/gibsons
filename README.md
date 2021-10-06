@@ -5,6 +5,8 @@ A prototype designed to
 1) Experiment with proposed 3D HTML/CSS layout standards
 2) Communicate those proposals with live visuals and code editing
 
+https://user-images.githubusercontent.com/1425497/136124010-1d9fd2e1-0977-4b93-977d-b0089f7d3984.mp4
+
 ## Getting started
 
 * `npm install` - Install dependencies
