@@ -5,8 +5,6 @@ A prototype designed to
 1) Experiment with proposed 3D HTML/CSS layout standards
 2) Communicate those proposals with live visuals and code editing
 
-![](./demo.gif)
-
 ## Getting started
 
 * `npm install` - Install dependencies
